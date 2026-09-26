@@ -10,7 +10,7 @@ Web app installable sur iPhone pour suivre une prise de masse lean en parallèle
 Toutes les données (pesées, photos, listes, prix corrigés) restent sur l'appareil (localStorage + IndexedDB). Réglages → Exporter une sauvegarde pour les conserver.
 
 ## Installer sur iPhone
-1. Ouvre l'adresse GitHub Pages du dépôt dans **Safari**.
+1. Ouvre https://romain-garnier-dev.github.io/Carnet-Lean-Bulk/ dans **Safari**.
 2. Partager → **Sur l'écran d'accueil**.
 
 ## Mettre à jour
