@@ -2,7 +2,7 @@
 (function () {
   "use strict";
   var D = window.CLB_DATA;
-  var APP_VERSION = "1.0.0";
+  var APP_VERSION = "1.1.0";
   var STORE_KEY = "clb.state.v1";
 
   /* ================= utilitaires ================= */
@@ -31,8 +31,8 @@
   /* ================= état ================= */
   function defaults() {
     return {
-      settings: { startDate: "2026-09-21", rotStart: "2026-09-21", kcalTarget: 2700, mealHours: [10, 14, 18], shopMode: "mix", lastExport: null },
-      weights: {}, waist: {}, kcal: {}, meals: {}, shop: {}, prices: {}
+      settings: { startDate: "2026-09-21", kcalTarget: 2700, mealHours: [10, 14, 18], shopMode: "mix", lastExport: null },
+      weights: {}, waist: {}, kcal: {}, plan: {}, day: {}, shop: {}, prices: {}
     };
   }
   var S = load();
@@ -53,9 +53,12 @@
     try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); }
     catch (e) { toast("Stockage plein : exporte une sauvegarde puis supprime des photos."); }
   }
-  function pruneMeals() {
-    var lim = addDays(today(), -60);
-    Object.keys(S.meals).forEach(function (k) { if (k < lim) delete S.meals[k]; });
+  function pruneOld() {
+    var lim = addDays(today(), -60), limW = addDays(mondayOf(today()), -56);
+    delete S.meals; delete S.settings.rotStart;
+    Object.keys(S.day).forEach(function (k) { if (k < lim) delete S.day[k]; });
+    Object.keys(S.shop).forEach(function (k) { if (k.indexOf("w-") !== 0 || k.slice(2) < limW) delete S.shop[k]; });
+    var pk = Object.keys(S.plan).sort(); pk.slice(0, Math.max(0, pk.length - 10)).forEach(function (k) { delete S.plan[k]; });
   }
 
   /* ================= photos (IndexedDB) ================= */
@@ -106,13 +109,39 @@
   function blockFor(w) { for (var i = 0; i < D.BLOCKS.length; i++) if (w >= D.BLOCKS[i].from && w <= D.BLOCKS[i].to) return D.BLOCKS[i]; return null; }
   function weekStartOf(n) { return addDays(mondayOf(S.settings.startDate), (n - 1) * 7); }
 
-  /* ================= repas ================= */
-  function menuIndexFor(dateIso) { var w = Math.floor(daysBetween(mondayOf(S.settings.rotStart), mondayOf(dateIso)) / 7); return ((w % 4) + 4) % 4; }
+  /* ================= repas (à la carte) ================= */
+  var MK = D.MOMENTS.map(function (m) { return m.k; });
+  var RBY = {};
+  MK.forEach(function (k) { D.RECIPES[k].forEach(function (r) { r.m = k; RBY[r.id] = r; }); });
+  var DEFAULT_PLAN = { pd: { "pd-porridge": 4, "pd-pancakes": 3 }, midi: { "mi-poulriz": 4, "mi-tikka": 3 }, coll: { "co-skyramandes": 4, "co-fbnoix": 3 }, soir: { "so-bolo": 4, "so-chili": 3 } };
   function macros(ing) { var t = [0, 0, 0, 0]; ing.forEach(function (x) { var f = D.FOOD[x[0]]; for (var i = 0; i < 4; i++) t[i] += f.n[i] * x[1] / 100; }); return t; }
-  function dayTotals(m) { var t = [0, 0, 0, 0]; m.meals.forEach(function (meal) { var x = macros(meal.ing); for (var i = 0; i < 4; i++) t[i] += x[i]; }); return t; }
-  function mealsToday() { var k = today(); if (!S.meals[k]) S.meals[k] = [false, false, false, false]; return S.meals[k]; }
+  function recipeName(id) { return id === "libre" ? "Repas libre (hors plan)" : RBY[id] ? RBY[id].name : "Recette supprimée"; }
+  function recipeMacros(id) { return RBY[id] ? macros(RBY[id].ing) : null; }
+  function planFor(ws) {
+    if (S.plan[ws]) return S.plan[ws];
+    var keys = Object.keys(S.plan).filter(function (k) { return k < ws; }).sort();
+    return JSON.parse(JSON.stringify(keys.length ? S.plan[keys[keys.length - 1]] : DEFAULT_PLAN));
+  }
+  function planIsCopy(ws) { return !S.plan[ws]; }
+  function planEnsure(ws) { if (!S.plan[ws]) S.plan[ws] = planFor(ws); MK.forEach(function (k) { if (!S.plan[ws][k]) S.plan[ws][k] = {}; }); return S.plan[ws]; }
+  function planCount(p, m) { var n = 0, o = p[m] || {}; Object.keys(o).forEach(function (id) { if (RBY[id]) n += o[id]; }); return n; }
+  function eatenInWeek(ws, id, exceptDate) {
+    var n = 0;
+    for (var i = 0; i < 7; i++) { var d = addDays(ws, i), x = S.day[d]; if (d === exceptDate || !x) continue; MK.forEach(function (k) { if (x[k] && x[k].r === id && x[k].done) n++; }); }
+    return n;
+  }
+  function suggest(m, d) {
+    var ws = mondayOf(d), p = planFor(ws)[m] || {}, best = null, bestLeft = -Infinity;
+    Object.keys(p).forEach(function (id) { if (!RBY[id] || !p[id]) return; var left = p[id] - eatenInWeek(ws, id, d); if (left > bestLeft) { bestLeft = left; best = id; } });
+    return best || D.RECIPES[m][0].id;
+  }
+  function pickFor(m, d) { var x = S.day[d] && S.day[d][m]; return (x && x.r) || suggest(m, d); }
+  function isDone(m, d) { var x = S.day[d] && S.day[d][m]; return !!(x && x.done); }
+  function dayRec(d) { if (!S.day[d]) S.day[d] = {}; return S.day[d]; }
+  function setDone(m, d, v) { var r = pickFor(m, d); dayRec(d)[m] = { r: r, done: v }; }
+  function setPick(m, d, id) { var x = dayRec(d); x[m] = { r: id, done: !!(x[m] && x[m].done) }; }
   function slotNow() { var h = new Date().getHours() + new Date().getMinutes() / 60, mh = S.settings.mealHours; return h < mh[0] ? 0 : h < mh[1] ? 1 : h < mh[2] ? 2 : 3; }
-  function ingName(k) { return D.RNAME[k] || D.FOOD[k].fr.replace(" (égoutté)", ""); }
+  function ingName(k) { return D.RNAME[k] || D.FOOD[k].fr.replace(" (égoutté)", "").replace(" (égouttées)", ""); }
 
   /* ================= pesées ================= */
   function weekValues(ws) { var out = []; for (var i = 0; i < 7; i++) { var v = S.weights[addDays(ws, i)]; out.push(typeof v === "number" ? v : null); } return out; }
@@ -164,10 +193,10 @@
     if (g >= 1000) return (Math.ceil(g / 100) / 10).toFixed(1).replace(".0", "").replace(".", ",") + " kg";
     return Math.ceil(g / 50) * 50 + " g";
   }
-  function shopItems(mi) {
-    var sum = {};
-    D.MENUS[mi].meals.forEach(function (m) { m.ing.forEach(function (x) { sum[x[0]] = (sum[x[0]] || 0) + x[1] * 7; }); });
-    return Object.keys(sum).map(function (k) {
+  function shopItems(ws) {
+    var sum = {}, p = planFor(ws);
+    MK.forEach(function (m) { Object.keys(p[m] || {}).forEach(function (id) { var r = RBY[id], n = p[m][id]; if (!r || !n) return; r.ing.forEach(function (x) { sum[x[0]] = (sum[x[0]] || 0) + x[1] * n; }); }); });
+    return Object.keys(sum).filter(function (k) { return !D.FOOD[k].stock; }).map(function (k) {
       var a = costOf(k, sum[k], "a"), l = costOf(k, sum[k], "l");
       return { k: k, f: D.FOOD[k], g: sum[k], q: qtyLabel(k, sum[k]), a: a, l: l, best: (l != null && (a == null || l < a)) ? "l" : "a" };
     });
@@ -177,13 +206,15 @@
     items.forEach(function (it) { a += it.a || 0; l += it.l || 0; m += Math.min(it.a == null ? Infinity : it.a, it.l == null ? Infinity : it.l); });
     return { a: a, l: l, m: m };
   }
-  function shopChecked(mi) { var key = "menu-" + (mi + 1); if (!S.shop[key]) S.shop[key] = {}; return S.shop[key]; }
+  function shopChecked(ws) { var key = "w-" + ws; if (!S.shop[key]) S.shop[key] = {}; return S.shop[key]; }
   var RAYONS = ["Protéines", "Féculents", "Légumes", "Laitiers", "Fruits & oléagineux", "Placard"];
   var STORE = { a: "Alcampo", l: "Lidl" };
 
   /* ================= navigation ================= */
   var current = "accueil";
-  var selMenu = menuIndexFor(today());
+  var weekOff = 0;
+  var repasSeg = MK[slotNow()];
+  function planWeek() { return addDays(mondayOf(today()), 7 * weekOff); }
   var suiviSeg = "pesees";
   function show(tab) {
     if (!$("view-" + tab)) tab = "accueil";
@@ -252,16 +283,16 @@
     html += '</section>';
 
     /* --- repas --- */
-    var mi = menuIndexFor(t), m = D.MENUS[mi], done = mealsToday(), slot = slotNow(), next = -1;
+    var done = MK.map(function (k) { return isDone(k, t); }), slot = slotNow(), next = -1;
     for (var k = slot; k < 4; k++) if (!done[k]) { next = k; break; }
     var missed = 0; for (var j = 0; j < slot; j++) if (!done[j]) missed++;
     html += '<section class="card"><div class="card-head"><h2>Prochain repas</h2><div class="dots" aria-label="' + done.filter(Boolean).length + ' repas sur 4">' + done.map(function (d) { return '<i class="' + (d ? 'on' : '') + '"></i>'; }).join("") + '</div></div>';
     if (next >= 0) {
-      var nm = m.meals[next], mc = macros(nm.ing);
-      html += '<div class="row"><div class="grow"><span class="eyebrow">' + D.MOMENTS[next] + ' · Menu ' + m.n + '</span><h3>' + esc(nm.name) + '</h3><p class="small muted num">' + Math.round(mc[0]) + ' kcal · ' + Math.round(mc[1]) + ' g protéines</p></div></div>' +
-        '<div class="row"><button class="btn primary grow" data-act="eat" data-i="' + next + '">Mangé</button><button class="btn" data-go="repas">Recette</button></div>';
+      var mk = MK[next], id = pickFor(mk, t), mc = recipeMacros(id);
+      html += '<div><span class="eyebrow">' + esc(D.MOMENTS[next].label) + '</span><h3>' + esc(recipeName(id)) + '</h3>' + (mc ? '<p class="small muted num">' + Math.round(mc[0]) + ' kcal · ' + Math.round(mc[1]) + ' g protéines</p>' : '') + '</div>' +
+        '<div class="row"><button class="btn primary grow" data-act="eat" data-m="' + mk + '">Mangé</button><button class="btn" data-act="choose" data-m="' + mk + '">Changer</button></div>';
     } else if (done.every(Boolean)) {
-      html += '<p><b>Journée complète.</b> <span class="muted">Les 4 repas sont cochés, objectif calories atteint.</span></p>';
+      html += '<p><b>Journée complète.</b> <span class="muted">Les 4 repas sont cochés.</span></p>';
     } else {
       html += '<p class="small">Plus de repas prévu à cette heure-ci.</p>';
     }
@@ -269,7 +300,7 @@
     html += '</section>';
 
     /* --- courses --- */
-    var items = shopItems(mi), ck = shopChecked(mi), left = items.filter(function (it) { return !ck[it.k]; });
+    var items = shopItems(mondayOf(t)), ck = shopChecked(mondayOf(t)), left = items.filter(function (it) { return !ck[it.k]; });
     var mode = S.settings.shopMode;
     html += '<section class="card"><div class="card-head"><h2>Courses</h2><span class="chip ' + (left.length ? 'grey' : 'good') + '">' + (left.length ? left.length + ' à acheter' : 'Tout est pris') + '</span></div>';
     if (left.length) {
@@ -279,7 +310,7 @@
       }).join("") + '</div>';
       if (left.length > 4) html += '<p class="tiny muted">+ ' + (left.length - 4) + ' autre' + (left.length - 4 > 1 ? 's' : '') + '</p>';
     }
-    html += '<button class="btn block" data-go="courses">Voir la liste · Menu ' + m.n + '</button></section>';
+    html += '<button class="btn block" data-go="courses">Voir la liste de la semaine</button></section>';
 
     /* --- photo --- */
     html += '<section class="card" id="photo-card"><div class="card-head"><h2>Photo</h2></div><p class="small muted" id="photo-status">…</p><button class="btn block" data-act="photo-go">Ouvrir mes photos</button></section>';
@@ -315,7 +346,9 @@
     } else if (act === "edit-today") {
       delete S.weights[today()]; save(); renderAccueil(); var i = $("today-w"); if (i) i.focus();
     } else if (act === "eat") {
-      mealsToday()[+a.dataset.i] = true; save(); toast("Repas coché"); renderAccueil();
+      setDone(a.dataset.m, today(), true); save(); toast("Repas coché"); renderAccueil();
+    } else if (act === "choose") {
+      chooseSheet(a.dataset.m, today(), renderAccueil);
     } else if (act === "photo-go") { suiviSeg = "photos"; show("suivi"); }
   });
   $("view-accueil").addEventListener("keydown", function (e) { if (e.key === "Enter" && e.target.id === "today-w") { e.preventDefault(); $("view-accueil").querySelector('[data-act="save-today"]').click(); } });
@@ -461,55 +494,94 @@
   }
 
   /* ================= REPAS ================= */
-  function pickerHTML() {
-    var cur = menuIndexFor(today());
-    return '<div class="menu-pick" role="group" aria-label="Menu">' + D.MENUS.map(function (m, i) {
-      var tag = i === cur ? "En cours" : i === (cur + 1) % 4 ? "Suivant" : "";
-      return '<button class="mp" data-menu="' + i + '" aria-pressed="' + (i === selMenu) + '"><span class="now">' + tag + '</span><span class="mn">Menu ' + m.n + '</span><span class="mt">' + esc(m.t) + '</span></button>';
-    }).join("") + '</div>';
+  function weekSegHTML() {
+    var ws0 = mondayOf(today());
+    return '<div class="seg" role="group" aria-label="Semaine"><button data-week="0" aria-pressed="' + (weekOff === 0) + '">Cette semaine</button><button data-week="1" aria-pressed="' + (weekOff === 1) + '">Semaine du ' + short(addDays(ws0, 7)) + '</button></div>';
+  }
+  function recipeBody(r) {
+    return '<ul class="ing">' + r.ing.map(function (x) { return '<li><span class="q">' + esc(x[2]) + '</span><span>' + esc(ingName(x[0])) + '</span></li>'; }).join("") + '</ul>' +
+      '<ol class="steps">' + r.steps.map(function (st) { return '<li>' + esc(st) + '</li>'; }).join("") + '</ol>' +
+      (r.batch ? '<p class="batch"><b>Batch :</b> ' + esc(r.batch) + '</p>' : '');
   }
   function renderRepas() {
-    var el = $("view-repas"), cur = menuIndexFor(today()), cm = D.MENUS[cur], done = mealsToday();
-    var eaten = 0, total = 0;
-    var list = cm.meals.map(function (meal, i) {
-      var mc = macros(meal.ing); total += mc[0]; if (done[i]) eaten += mc[0];
-      return '<div class="tl' + (done[i] ? ' done' : '') + '" data-eat="' + i + '"><button class="check" role="checkbox" aria-checked="' + !!done[i] + '" aria-label="' + esc(D.MOMENTS[i]) + ' mangé">' + CHECK_SVG + '</button><span class="txt"><span class="eyebrow">' + D.MOMENT_SHORT[i] + '</span><span class="nm">' + esc(meal.name) + '</span></span><span class="k">' + Math.round(mc[0]) + ' kcal</span></div>';
+    var el = $("view-repas"), t = today(), eaten = 0, total = 0;
+    var rows = D.MOMENTS.map(function (mo) {
+      var id = pickFor(mo.k, t), d = isDone(mo.k, t), mc = recipeMacros(id);
+      if (mc) { total += mc[0]; if (d) eaten += mc[0]; }
+      return '<div class="tl' + (d ? ' done' : '') + '"><button class="check" role="checkbox" aria-checked="' + d + '" data-eat="' + mo.k + '" aria-label="' + esc(mo.label) + ' mangé">' + CHECK_SVG + '</button>' +
+        '<button class="txt pick" data-choose="' + mo.k + '" aria-label="Changer le ' + esc(mo.short) + '"><span class="eyebrow">' + esc(mo.short) + '</span><span class="nm">' + esc(recipeName(id)) + '</span></button>' +
+        '<span class="k">' + (mc ? Math.round(mc[0]) + ' kcal' : '—') + '</span></div>';
     }).join("");
-    var html = '<section class="card"><div class="card-head"><h2>Aujourd\'hui</h2><span class="chip grey">Menu ' + cm.n + ' · ' + esc(cm.t) + '</span></div>' +
-      '<div class="bar" aria-hidden="true"><i style="width:' + (total ? eaten / total * 100 : 0) + '%"></i></div><p class="tiny muted num">' + Math.round(eaten) + ' / ' + Math.round(total) + ' kcal · se remet à zéro chaque jour</p>' +
-      '<div class="today-list">' + list + '</div></section>';
-    var m = D.MENUS[selMenu], t = dayTotals(m);
-    html += pickerHTML() +
-      '<div class="stats four"><div class="stat"><span class="eyebrow">kcal</span><span class="v">' + Math.round(t[0]) + '</span></div><div class="stat"><span class="eyebrow">Prot.</span><span class="v">' + Math.round(t[1]) + '<small>g</small></span></div><div class="stat"><span class="eyebrow">Gluc.</span><span class="v">' + Math.round(t[2]) + '<small>g</small></span></div><div class="stat"><span class="eyebrow">Lip.</span><span class="v">' + Math.round(t[3]) + '<small>g</small></span></div></div>' +
-      '<p class="small muted">' + esc(m.note) + ' Valeurs approximatives.</p>';
-    html += m.meals.map(function (meal, k) {
-      var mc = macros(meal.ing);
-      return '<article class="meal"><div class="meal-top"><div><span class="eyebrow">' + D.MOMENTS[k] + '</span><h3>' + esc(meal.name) + '</h3></div><div class="macros"><span class="chip red num">' + Math.round(mc[0]) + ' kcal</span><span class="chip grey num">' + Math.round(mc[1]) + ' g P</span></div></div>' +
-        '<ul class="ing">' + meal.ing.map(function (x) { return '<li><span class="q">' + esc(x[2]) + '</span><span>' + esc(ingName(x[0])) + '</span></li>'; }).join("") + '</ul>' +
-        '<details class="fold"><summary>Recette</summary><ol class="steps">' + meal.steps.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join("") + '</ol></details>' +
-        (meal.batch ? '<p class="batch"><b>Batch :</b> ' + esc(meal.batch) + '</p>' : '') + '</article>';
+    var html = '<section class="card"><div class="card-head"><h2>Aujourd\'hui</h2><span class="tiny muted">' + esc(longDate(t)) + '</span></div>' +
+      '<div class="bar" aria-hidden="true"><i style="width:' + (total ? eaten / total * 100 : 0) + '%"></i></div><p class="tiny muted num">' + Math.round(eaten) + ' / ' + Math.round(total) + ' kcal · touche un repas pour en choisir un autre · remise à zéro chaque jour</p>' +
+      '<div class="today-list">' + rows + '</div></section>';
+
+    var ws = planWeek(), p = planFor(ws), counts = MK.map(function (k) { return planCount(p, k); });
+    var mi = MK.indexOf(repasSeg), cnt = counts[mi];
+    html += '<div class="section-head"><h2>Ma semaine</h2><span class="tiny muted">' + short(ws) + ' → ' + short(addDays(ws, 6)) + '</span></div>' + weekSegHTML() +
+      '<div class="moments" role="group" aria-label="Moment de la journée">' + D.MOMENTS.map(function (mo, i) {
+        return '<button class="mo" data-seg="' + mo.k + '" aria-pressed="' + (mo.k === repasSeg) + '"><span class="mn">' + esc(mo.short) + '</span><span class="mc ' + (counts[i] === 7 ? 'ok' : 'ko') + '">' + counts[i] + '/7</span></button>';
+      }).join("") + '</div>' +
+      '<p class="small muted">Choisis combien de fois tu manges chaque recette' + (weekOff ? ' la semaine prochaine' : ' cette semaine') + ' : la liste de courses se calcule dessus. ' +
+      (cnt === 7 ? '<span class="chip good">7/7 prévus</span>' : '<span class="chip warn">' + cnt + '/7 prévus</span>') +
+      (planIsCopy(ws) ? ' <span class="tiny">Planning repris de la semaine précédente.</span>' : '') + '</p>';
+    html += D.RECIPES[repasSeg].map(function (r) {
+      var n = (p[repasSeg] && p[repasSeg][r.id]) || 0, mc = macros(r.ing);
+      return '<article class="meal' + (n ? ' planned' : '') + '"><div class="meal-top"><div class="grow"><h3>' + esc(r.name) + '</h3><p class="small muted num">' + Math.round(mc[0]) + ' kcal · ' + Math.round(mc[1]) + ' g P · ' + Math.round(mc[2]) + ' g G · ' + Math.round(mc[3]) + ' g L</p></div>' +
+        '<div class="stepper" role="group" aria-label="Portions de ' + esc(r.name) + '"><button data-step="-1" data-id="' + r.id + '" aria-label="Une portion de moins"' + (n ? '' : ' disabled') + '>−</button><span class="num">' + n + '</span><button data-step="1" data-id="' + r.id + '" aria-label="Une portion de plus">+</button></div></div>' +
+        '<details class="fold"><summary>Ingrédients & recette</summary>' + recipeBody(r) + '</details></article>';
     }).join("");
-    html += '<section class="card"><h2>Organisation</h2><ul class="keys"><li>Deux sessions de cuisine : dimanche pour lundi-mercredi, mercredi soir pour jeudi-samedi.</li><li>Les gamelles se gardent 3-4 jours au frigo, sinon congèle-les le jour même.</li><li>Riz et pâtes pesés crus.</li><li>Pas faim ? Un shaker de whey (30 g) dans du lait remplace la collation.</li></ul></section>';
+    html += '<section class="card"><h2>Organisation</h2><ul class="keys"><li>Deux sessions de cuisine : dimanche pour lundi-mercredi, mercredi soir pour jeudi-samedi.</li><li>Les gamelles se gardent 3-4 jours au frigo, sinon congèle-les le jour même.</li><li>Riz, pâtes et semoule pesés crus.</li><li>Chaque petit-déj tourne autour de 750 kcal, chaque gamelle autour de 800, chaque collation autour de 380 : tu peux combiner librement, tu restes vers 2700 kcal.</li></ul></section>';
     el.innerHTML = html;
   }
   $("view-repas").addEventListener("click", function (e) {
-    var mp = e.target.closest("[data-menu]"); if (mp) { selMenu = +mp.dataset.menu; renderRepas(); return; }
-    var r = e.target.closest("[data-eat]"); if (r) { var i = +r.dataset.eat, d = mealsToday(); d[i] = !d[i]; save(); renderRepas(); }
+    var t = today();
+    var wk = e.target.closest("[data-week]"); if (wk) { weekOff = +wk.dataset.week; renderRepas(); return; }
+    var sg = e.target.closest("[data-seg]"); if (sg) { repasSeg = sg.dataset.seg; renderRepas(); return; }
+    var st = e.target.closest("[data-step]");
+    if (st) {
+      var ws = planWeek(), p = planEnsure(ws), o = p[repasSeg], id = st.dataset.id, n = (o[id] || 0) + (+st.dataset.step);
+      n = Math.max(0, Math.min(14, n)); if (n) o[id] = n; else delete o[id];
+      save(); renderRepas(); return;
+    }
+    var ea = e.target.closest("[data-eat]"); if (ea) { var m = ea.dataset.eat; setDone(m, t, !isDone(m, t)); save(); renderRepas(); return; }
+    var ch = e.target.closest("[data-choose]"); if (ch) { chooseSheet(ch.dataset.choose, t, renderRepas); }
   });
+
+  function chooseSheet(m, d, after) {
+    var mo = D.MOMENTS[MK.indexOf(m)], ws = mondayOf(d), p = planFor(ws)[m] || {}, cur = pickFor(m, d);
+    var planned = D.RECIPES[m].filter(function (r) { return p[r.id]; }), others = D.RECIPES[m].filter(function (r) { return !p[r.id]; });
+    function row(r, extra) {
+      var mc = macros(r.ing);
+      return '<button class="opt' + (r.id === cur ? ' sel' : '') + '" data-pick="' + r.id + '"><span class="grow"><span class="nm">' + esc(r.name) + '</span>' + (extra ? '<span class="tiny muted">' + extra + '</span>' : '') + '</span><span class="k num">' + Math.round(mc[0]) + ' kcal</span></button>';
+    }
+    sheet('<h2>' + esc(mo.label) + '</h2><p class="small muted">Qu\'est-ce qui te fait envie ?</p>' +
+      (planned.length ? '<span class="eyebrow">Prévu cette semaine</span><div class="opts">' + planned.map(function (r) { var left = p[r.id] - eatenInWeek(ws, r.id, d); return row(r, left > 0 ? 'Encore ' + left + ' prévu' + (left > 1 ? 's' : '') : 'Quota de la semaine atteint'); }).join("") + '</div>' : '') +
+      '<span class="eyebrow">Autres recettes</span><div class="opts">' + others.map(function (r) { return row(r, 'Hors planning'); }).join("") +
+      '<button class="opt' + (cur === "libre" ? ' sel' : '') + '" data-pick="libre"><span class="grow"><span class="nm">Repas libre (hors plan)</span><span class="tiny muted">Resto, repas de famille…</span></span></button></div>' +
+      '<button class="btn block" data-sheet="close">Annuler</button>', function (root) {
+      root.querySelectorAll("[data-pick]").forEach(function (b) {
+        b.addEventListener("click", function () { setPick(m, d, b.dataset.pick); save(); closeSheet(); after(); toast("Repas choisi"); });
+      });
+    });
+  }
 
   /* ================= COURSES ================= */
   function renderCourses() {
-    var el = $("view-courses"), items = shopItems(selMenu), ck = shopChecked(selMenu), tot = shopTotals(items), mode = S.settings.shopMode;
+    var el = $("view-courses"), ws = planWeek(), items = shopItems(ws), ck = shopChecked(ws), tot = shopTotals(items), mode = S.settings.shopMode;
     var done = items.filter(function (it) { return ck[it.k]; }).length;
+    var p = planFor(ws), missing = D.MOMENTS.filter(function (mo) { return planCount(p, mo.k) !== 7; });
     var bestTot = Math.min(tot.a, tot.l), bestKey = tot.m < bestTot - 0.5 ? "m" : (tot.a <= tot.l ? "a" : "l");
-    var html = pickerHTML() +
-      '<section class="card"><div class="card-head"><h2>Coût de la semaine</h2><span class="tiny muted">7 jours · Menu ' + D.MENUS[selMenu].n + '</span></div>' +
+    var html = weekSegHTML();
+    if (missing.length) html += '<div class="verdict"><span class="chip warn">Planning</span><p>' + missing.map(function (mo) { return esc(mo.short) + ' ' + planCount(p, mo.k) + '/7'; }).join(" · ") + ' : la liste ne couvre pas toute la semaine. <button class="link" data-go="repas" data-seg="' + missing[0].k + '">Compléter</button></p></div>';
+    html += '<section class="card"><div class="card-head"><h2>Coût de la semaine</h2><span class="tiny muted">' + short(ws) + ' → ' + short(addDays(ws, 6)) + '</span></div>' +
       '<div class="cost"><div class="' + (bestKey === "a" ? "best" : "") + '"><span class="eyebrow">Alcampo</span><span class="v">' + fmt(tot.a, 0) + ' €</span></div>' +
       '<div class="' + (bestKey === "l" ? "best" : "") + '"><span class="eyebrow">Lidl</span><span class="v">' + fmt(tot.l, 0) + ' €</span></div>' +
       '<div class="' + (bestKey === "m" ? "best" : "") + '"><span class="eyebrow">Mix</span><span class="v">' + fmt(tot.m, 0) + ' €</span></div></div>' +
-      '<p class="tiny muted">Coût des quantités mangées dans la semaine (hors épices). Alcampo : prix relevés en ligne le ' + D.PRICES_DATE + '. Lidl : prix estimés, corrige-les en magasin en touchant un prix.' + (tot.m < bestTot - 0.5 ? ' Le mix fait économiser ' + fmt(bestTot - tot.m, 0) + ' € mais demande deux magasins.' : '') + '</p></section>' +
+      '<p class="tiny muted">Coût des quantités de ton planning (hors épices et whey). Alcampo : prix relevés en ligne le ' + D.PRICES_DATE + ', sauf ceux marqués ~. Lidl : prix estimés. Touche un prix pour le corriger.' + (tot.m < bestTot - 0.5 ? ' Le mix fait économiser ' + fmt(bestTot - tot.m, 0) + ' € mais demande deux magasins.' : '') + '</p></section>' +
       '<div class="seg" role="group" aria-label="Magasin"><button data-mode="mix" aria-pressed="' + (mode === "mix") + '">Meilleur prix</button><button data-mode="a" aria-pressed="' + (mode === "a") + '">Tout Alcampo</button><button data-mode="l" aria-pressed="' + (mode === "l") + '">Tout Lidl</button></div>' +
       '<section class="card"><div class="row"><div class="bar grow" aria-hidden="true"><i style="width:' + (items.length ? done / items.length * 100 : 0) + '%"></i></div><span class="small muted num">' + done + ' / ' + items.length + '</span><button class="link" data-act="reset">Tout décocher</button></div>';
+    if (!items.length) html += '<div class="empty">Aucune recette prévue pour cette semaine. Planifie tes repas dans l\'onglet Repas.</div>';
     var groups;
     if (mode === "mix") groups = [["a", items.filter(function (it) { return it.best === "a"; })], ["l", items.filter(function (it) { return it.best === "l"; })]].map(function (g) { return { t: "À acheter chez " + STORE[g[0]], items: g[1] }; });
     else groups = RAYONS.map(function (r) { return { t: r, items: items.filter(function (it) { return it.f.rayon === r; }) }; });
@@ -524,19 +596,20 @@
           '<div class="right"><span class="qty">' + esc(it.q) + '</span><button class="pricebtn" data-price="' + it.k + '" aria-label="Modifier le prix de ' + esc(it.f.fr) + '">' + (edited ? '<span class="edited"></span>' : '') + (c == null ? '—' : fmt(c, 2) + ' €') + '<span class="muted">' + (pr.src === "estimé" ? '~' : '') + '</span></button></div></div>';
       }).join("") + '</div>';
     });
-    html += '<div class="group"><h3>Épices · à vérifier</h3>' + D.SPICES.map(function (s) { return '<div class="item"><div class="txt"><span class="nm">' + esc(s[0]) + '</span><span class="es">' + esc(s[1]) + '</span></div></div>'; }).join("") + '</div></section>';
+    html += '<div class="group"><h3>Épices · à vérifier</h3>' + D.SPICES.map(function (sp) { return '<div class="item"><div class="txt"><span class="nm">' + esc(sp[0]) + '</span><span class="es">' + esc(sp[1]) + '</span></div></div>'; }).join("") + '</div></section>';
     el.innerHTML = html;
   }
   var resetTimer = null;
   $("view-courses").addEventListener("click", function (e) {
-    var mp = e.target.closest("[data-menu]"); if (mp) { selMenu = +mp.dataset.menu; renderCourses(); return; }
+    var go = e.target.closest("[data-go]"); if (go) { if (go.dataset.seg) repasSeg = go.dataset.seg; show(go.dataset.go); return; }
+    var wk = e.target.closest("[data-week]"); if (wk) { weekOff = +wk.dataset.week; renderCourses(); return; }
     var md = e.target.closest("[data-mode]"); if (md) { S.settings.shopMode = md.dataset.mode; save(); renderCourses(); return; }
     var pb = e.target.closest("[data-price]"); if (pb) { priceSheet(pb.dataset.price); return; }
-    var c = e.target.closest("[data-ck]"); if (c) { var ck = shopChecked(selMenu), k = c.dataset.ck; if (ck[k]) delete ck[k]; else ck[k] = true; save(); renderCourses(); return; }
+    var c = e.target.closest("[data-ck]"); if (c) { var ck = shopChecked(planWeek()), k = c.dataset.ck; if (ck[k]) delete ck[k]; else ck[k] = true; save(); renderCourses(); return; }
     var a = e.target.closest("[data-act]");
     if (a && a.dataset.act === "reset") {
       if (!a.dataset.armed) { a.dataset.armed = "1"; a.textContent = "Confirmer ?"; clearTimeout(resetTimer); resetTimer = setTimeout(function () { if (a.isConnected) { delete a.dataset.armed; a.textContent = "Tout décocher"; } }, 3000); return; }
-      S.shop["menu-" + (selMenu + 1)] = {}; save(); renderCourses(); toast("Liste remise à zéro");
+      S.shop["w-" + planWeek()] = {}; save(); renderCourses(); toast("Liste remise à zéro");
     }
   });
   function priceSheet(k) {
@@ -614,10 +687,10 @@
       root.querySelector("#s-save").addEventListener("click", function () {
         var sd = root.querySelector("#s-start").value, kc = parseNum(root.querySelector("#s-kcal").value);
         var h = [0, 1, 2].map(function (i) { return parseNum(root.querySelector("#s-h" + i).value); });
-        if (sd) { S.settings.startDate = sd; S.settings.rotStart = sd; }
+        if (sd) S.settings.startDate = sd;
         if (kc && kc > 1200 && kc < 6000) S.settings.kcalTarget = Math.round(kc);
         if (h.every(function (x) { return x != null && x >= 0 && x <= 24; }) && h[0] < h[1] && h[1] < h[2]) S.settings.mealHours = h;
-        save(); selMenu = menuIndexFor(today()); closeSheet(); render(); toast("Réglages enregistrés");
+        save(); closeSheet(); render(); toast("Réglages enregistrés");
       });
       var wipe = root.querySelector("#wipe");
       wipe.addEventListener("click", function () {
@@ -639,14 +712,14 @@
       var p; try { p = JSON.parse(r.result); } catch (err) { toast("Fichier illisible : choisis un fichier .json exporté par l'app."); return; }
       if (!p || p.app !== "carnet-lean-bulk" || !p.state) { toast("Ce fichier n'est pas une sauvegarde Carnet Lean Bulk."); return; }
       var s = p.state, nW = 0;
-      ["weights", "waist", "kcal", "meals", "shop", "prices"].forEach(function (k) {
+      ["weights", "waist", "kcal", "plan", "day", "shop", "prices"].forEach(function (k) {
         if (s[k] && typeof s[k] === "object") Object.keys(s[k]).forEach(function (x) { if (k === "weights" && S.weights[x] !== s.weights[x]) nW++; S[k][x] = s[k][x]; });
       });
       if (s.settings) Object.keys(s.settings).forEach(function (x) { if (x !== "lastExport") S.settings[x] = s.settings[x]; });
       save();
       var ph = Array.isArray(p.photos) ? p.photos : [];
       Promise.all(ph.map(function (x) { return photoPut({ id: x.id, date: x.date, blob: dataURLToBlob(x.data) }); })).then(function () {
-        closeSheet(); selMenu = menuIndexFor(today()); render();
+        closeSheet(); render();
         toast("Import terminé : " + nW + " pesée" + (nW > 1 ? "s" : "") + ", " + ph.length + " photo" + (ph.length > 1 ? "s" : ""));
       });
     };
@@ -654,11 +727,11 @@
   });
 
   /* ================= démarrage ================= */
-  pruneMeals(); save();
+  pruneOld(); save();
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function () {});
   var lastDay = today();
   document.addEventListener("visibilitychange", function () {
-    if (document.visibilityState === "visible" && today() !== lastDay) { lastDay = today(); selMenu = menuIndexFor(lastDay); render(); }
+    if (document.visibilityState === "visible" && today() !== lastDay) { lastDay = today(); repasSeg = MK[slotNow()]; render(); }
   });
   var startTab = null;
   if (location.hash) startTab = location.hash.slice(1);

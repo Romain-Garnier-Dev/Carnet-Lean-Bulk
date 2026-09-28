@@ -1,4 +1,4 @@
-/* Carnet Lean Bulk — données statiques (aliments, menus, prix, programme).
+/* Carnet Lean Bulk — données statiques (aliments, recettes, prix, programme).
    Les données personnelles (pesées, photos, cases cochées, prix corrigés) ne sont
    jamais dans ce fichier : elles restent sur l'iPhone. */
 
@@ -39,7 +39,26 @@ window.CLB_DATA = (function () {
     pb:       { fr: "Beurre de cacahuète 100 %", es: "crema de cacahuete 100 %", rayon: "Fruits & oléagineux", n: [610, 25, 12, 50] },
     huile:    { fr: "Huile d'olive", es: "aceite de oliva virgen extra", rayon: "Placard", n: [900, 0, 0, 100], liquid: true },
     soja:     { fr: "Sauce soja", es: "salsa de soja", rayon: "Placard", n: [60, 8, 6, 0], liquid: true },
-    miel:     { fr: "Miel", es: "miel", rayon: "Placard", n: [320, 0, 80, 0] }
+    miel:     { fr: "Miel", es: "miel", rayon: "Placard", n: [320, 0, 80, 0] },
+    porc:     { fr: "Longe / filet de porc", es: "lomo de cerdo en filetes", rayon: "Protéines", n: [140, 21, 0, 6] },
+    jambon:   { fr: "Jambon blanc", es: "jamón cocido extra", rayon: "Protéines", n: [110, 20, 1, 3] },
+    saumon:   { fr: "Pavés de saumon surgelés", es: "lomos de salmón congelados", rayon: "Protéines", n: [200, 20, 0, 13] },
+    mozza:    { fr: "Mozzarella light", es: "mozzarella light", rayon: "Laitiers", n: [160, 20, 1, 9] },
+    tortilla: { fr: "Wraps de blé (tortillas)", es: "tortillas de trigo", rayon: "Féculents", n: [300, 8, 50, 7], piece: 60 },
+    semoule:  { fr: "Semoule", es: "cuscús", rayon: "Féculents", n: [360, 12, 73, 1.5] },
+    patdouce: { fr: "Patates douces", es: "boniatos", rayon: "Féculents", n: [86, 1.6, 20, 0.1] },
+    galettes: { fr: "Galettes de riz", es: "tortitas de arroz", rayon: "Féculents", n: [380, 8, 80, 3] },
+    lentilles:{ fr: "Lentilles cuites (égouttées)", es: "lentejas cocidas (bote)", rayon: "Légumes", n: [116, 9, 17, 0.4] },
+    poischiches:{ fr: "Pois chiches cuits (égouttés)", es: "garbanzos cocidos (bote)", rayon: "Légumes", n: [140, 7, 20, 2.5] },
+    champi:   { fr: "Champignons émincés", es: "champiñones laminados", rayon: "Légumes", n: [22, 3, 0.5, 0.3] },
+    courgette:{ fr: "Courgettes", es: "calabacines", rayon: "Légumes", n: [17, 1.2, 2.5, 0.3] },
+    mais:     { fr: "Maïs en boîte (égoutté)", es: "maíz dulce en lata", rayon: "Légumes", n: [90, 3, 17, 1.2] },
+    tcerises: { fr: "Tomates cerises", es: "tomates cherry", rayon: "Légumes", n: [20, 1, 3, 0.2] },
+    frouges:  { fr: "Fruits rouges surgelés", es: "frutos rojos congelados", rayon: "Fruits & oléagineux", n: [45, 1, 8, 0.3] },
+    choco:    { fr: "Chocolat noir 70 %", es: "chocolate negro 70 %", rayon: "Placard", n: [580, 8, 33, 42] },
+    cacao:    { fr: "Cacao en poudre non sucré", es: "cacao puro en polvo", rayon: "Placard", n: [350, 20, 15, 20] },
+    coco:     { fr: "Lait de coco light", es: "leche de coco light", rayon: "Placard", n: [70, 0.8, 2, 6.5], liquid: true },
+    whey:     { fr: "Whey", es: "proteína whey", rayon: "Déjà chez toi", n: [380, 78, 6, 5], stock: true }
   };
 
   /* Prix au kg (ou au litre ; à l'unité pour les œufs).
@@ -79,7 +98,25 @@ window.CLB_DATA = (function () {
     pb:       { a: 5.30, l: 6.54, unit: "kg" },
     huile:    { a: 4.69, l: 7.99, unit: "L" },
     soja:     { a: 8.60, l: 7.93, unit: "L", ae: true },
-    miel:     { a: 6.98, l: 7.98, unit: "kg", ae: true }
+    miel:     { a: 6.98, l: 7.98, unit: "kg", ae: true },
+    porc:     { a: 6.50, l: 7.49, unit: "kg", ae: true },
+    jambon:   { a: 8.50, l: 8.90, unit: "kg", ae: true },
+    saumon:   { a: 13.90, l: 12.90, unit: "kg", ae: true },
+    mozza:    { a: 7.90, l: 7.40, unit: "kg", ae: true },
+    tortilla: { a: 4.00, l: 4.20, unit: "kg", ae: true },
+    semoule:  { a: 1.60, l: 1.50, unit: "kg", ae: true },
+    patdouce: { a: 2.20, l: 2.50, unit: "kg", ae: true },
+    galettes: { a: 6.00, l: 5.50, unit: "kg", ae: true },
+    lentilles:{ a: 2.50, l: 2.40, unit: "kg", ae: true },
+    poischiches:{ a: 2.20, l: 2.30, unit: "kg", ae: true },
+    champi:   { a: 3.60, l: 3.50, unit: "kg", ae: true },
+    courgette:{ a: 1.80, l: 1.99, unit: "kg", ae: true },
+    mais:     { a: 3.50, l: 3.20, unit: "kg", ae: true },
+    tcerises: { a: 3.50, l: 3.80, unit: "kg", ae: true },
+    frouges:  { a: 4.50, l: 3.99, unit: "kg", ae: true },
+    choco:    { a: 12.00, l: 10.00, unit: "kg", ae: true },
+    cacao:    { a: 9.00, l: 8.50, unit: "kg", ae: true },
+    coco:     { a: 5.00, l: 4.50, unit: "L", ae: true }
   };
 
   var SPICES = [
@@ -89,60 +126,117 @@ window.CLB_DATA = (function () {
   ];
 
   var RNAME = { banane: "Banane", pomme: "Pomme", clem: "Clémentines", pain: "Pain complet", yaourt: "Yaourt nature",
-    hrouges: "Haricots rouges", thon: "Thon au naturel", poivrons: "Poivrons surgelés", hache: "Bœuf haché 5 %" };
+    hrouges: "Haricots rouges", thon: "Thon au naturel", poivrons: "Poivrons surgelés", hache: "Bœuf haché 5 %",
+    tortilla: "Wraps", lentilles: "Lentilles cuites", poischiches: "Pois chiches", mais: "Maïs", saumon: "Pavé de saumon",
+    patdouce: "Patate douce", coco: "Lait de coco light", porc: "Filet de porc" };
 
-  var MOMENTS = ["Petit-déjeuner", "Midi · gamelle", "Collation", "Soir · gamelle"];
-  var MOMENT_SHORT = ["Petit-déj", "Midi", "Collation", "Soir"];
+  /* Moments de la journée : clé, libellé, libellé court, objectif kcal indicatif */
+  var MOMENTS = [
+    { k: "pd", label: "Petit-déjeuner", short: "Petit-déj", kcal: 750 },
+    { k: "midi", label: "Midi · gamelle", short: "Midi", kcal: 780 },
+    { k: "coll", label: "Collation", short: "Collation", kcal: 380 },
+    { k: "soir", label: "Soir · gamelle", short: "Soir", kcal: 800 }
+  ];
 
-  /* Ingrédient : [clé, grammes, libellé affiché] */
-  var MENUS = [
-    { n: 1, t: "Classique", note: "La base : poulet-riz le midi, bolo le soir. Simple à répéter, facile à peser.", meals: [
-      { name: "Porridge banane & œufs brouillés", ing: [["avoine", 100, "100 g"], ["lait", 300, "300 ml"], ["banane", 120, "1"], ["oeuf", 110, "2"]],
+  /* Recettes à la carte. Ingrédient : [clé, grammes, libellé affiché].
+     Matériel : plaque, micro-ondes, air fryer, mixeur. Sans oignon. */
+  var RECIPES = {
+    pd: [
+      { id: "pd-porridge", name: "Porridge banane & œufs brouillés", ing: [["avoine", 100, "100 g"], ["lait", 300, "300 ml"], ["banane", 120, "1"], ["oeuf", 110, "2"]],
         steps: ["Verse l'avoine et le lait dans une casserole, cuis 3-4 min à feu moyen en remuant (ou 2 min au micro-ondes, en 2 fois).", "Coupe la banane en rondelles par-dessus.", "Brouille les 2 œufs à la poêle antiadhésive, sel et poivre."] },
-      { name: "Poulet paprika, riz & haricots verts", ing: [["riz", 120, "120 g cru"], ["poulet", 200, "200 g"], ["hverts", 150, "150 g"], ["huile", 10, "1 c. à s."]],
-        steps: ["Cuis le riz 11-12 min dans l'eau salée, égoutte.", "Coupe le poulet en dés et saisis-le 6-8 min à feu vif dans l'huile avec 1 c. à c. de paprika, ail en poudre, sel.", "Ajoute les haricots verts surgelés dans la poêle 6-8 min, ou passe-les au micro-ondes.", "Répartis en gamelles : riz, poulet, légumes."],
-        batch: "Pour 3 gamelles : 360 g de riz, 600 g de poulet, 450 g de haricots." },
-      { name: "Skyr, amandes & pomme", ing: [["skyr", 250, "250 g"], ["amandes", 30, "30 g"], ["pomme", 150, "1"]],
-        steps: ["Tout se mange tel quel. Coupe la pomme dans le skyr si tu préfères en bol."] },
-      { name: "Pâtes bolognaise express & brocolis", ing: [["pates", 125, "125 g crues"], ["hache", 150, "150 g"], ["passata", 150, "150 g"], ["brocoli", 150, "150 g"], ["emmental", 20, "20 g"]],
-        steps: ["Fais dorer le haché 5 min à la poêle sans matière grasse, en l'émiettant.", "Ajoute la passata, 1 c. à c. d'herbes de Provence, sel, poivre, et laisse mijoter 10 min.", "Cuis les pâtes al dente, et les brocolis 6 min au micro-ondes avec un fond d'eau.", "Mélange pâtes et sauce, brocolis à côté, emmental dessus."],
-        batch: "Pour 3 gamelles : 375 g de pâtes, 450 g de haché, 450 g de passata." }] },
-    { n: 2, t: "Tex-Mex", note: "Overnight oats à préparer la veille, pâtes au thon et chili con carne.", meals: [
-      { name: "Overnight oats skyr & miel", ing: [["avoine", 90, "90 g"], ["lait", 250, "250 ml"], ["skyr", 150, "150 g"], ["miel", 10, "1 c. à c."], ["banane", 120, "1"]],
+      { id: "pd-overnight", name: "Overnight oats skyr & miel", ing: [["avoine", 100, "100 g"], ["lait", 250, "250 ml"], ["skyr", 150, "150 g"], ["miel", 10, "1 c. à c."], ["banane", 120, "1"]],
         steps: ["La veille, mélange l'avoine, le lait, le skyr et le miel dans une boîte fermée.", "Laisse une nuit au frigo.", "Le matin, ajoute la banane en rondelles. Ça se mange froid."],
-        batch: "Tu peux en préparer 3 boîtes d'un coup, elles tiennent 3 jours." },
-      { name: "Pâtes thon, tomate & poivrons", ing: [["pates", 120, "120 g crues"], ["thon", 140, "140 g égoutté"], ["passata", 150, "150 g"], ["poivrons", 150, "150 g"], ["huile", 10, "1 c. à s."]],
-        steps: ["Cuis les pâtes al dente.", "Dans une poêle, fais revenir les poivrons surgelés 5 min dans l'huile avec ail en poudre et origan.", "Ajoute la passata, 5 min de mijotage, puis le thon émietté hors du feu.", "Mélange avec les pâtes, sel et poivre."],
-        batch: "140 g égoutté ≈ 1 grande boîte ou 2-3 petites." },
-      { name: "Fromage blanc, noix & clémentines", ing: [["fblanc", 250, "250 g"], ["noix", 30, "30 g"], ["clem", 150, "2"]],
-        steps: ["Noix concassées sur le fromage blanc, clémentines à côté."] },
-      { name: "Chili con carne & riz", ing: [["riz", 110, "110 g cru"], ["hache", 160, "160 g"], ["hrouges", 100, "100 g égouttés"], ["passata", 150, "150 g"], ["poivrons", 100, "100 g"], ["huile", 10, "1 c. à s."]],
-        steps: ["Fais revenir les poivrons dans l'huile 3 min, ajoute le haché et fais dorer 5 min.", "Ajoute 1 c. à c. de cumin, 1 c. à c. de paprika, une pincée de piment, sel.", "Verse la passata et les haricots rouges rincés, mijote 15 min à couvert.", "Cuis le riz à part et sers le chili dessus."],
-        batch: "Le chili est meilleur réchauffé : fais-en 3-4 portions d'un coup." }] },
-    { n: 3, t: "Four & wok", note: "Pommes de terre rôties au four et riz sauté façon wok, avec des tartines le matin pour changer de l'avoine.", meals: [
-      { name: "Tartines & œufs au plat", ing: [["pain", 130, "4 tranches"], ["oeuf", 165, "3"], ["lait", 250, "250 ml"], ["banane", 120, "1"]],
+        batch: "Prépare 3 boîtes d'un coup, elles tiennent 3 jours." },
+      { id: "pd-tartines", name: "Tartines & œufs au plat", ing: [["pain", 130, "4 tranches"], ["oeuf", 165, "3"], ["lait", 250, "250 ml"], ["banane", 120, "1"]],
         steps: ["Toaste le pain.", "Cuis les 3 œufs au plat ou brouillés à la poêle antiadhésive.", "Un verre de lait et la banane à côté."] },
-      { name: "Poulet pimentón & pommes de terre rôties", ing: [["pdt", 400, "400 g"], ["poulet", 200, "200 g"], ["hverts", 150, "150 g"], ["huile", 15, "1,5 c. à s."]],
-        steps: ["Coupe les pommes de terre en cubes (avec la peau), mélange avec 1 c. à s. d'huile, du pimentón, du sel.", "Enfourne 35 min à 200 °C en remuant à mi-cuisson.", "Pendant ce temps, saisis le poulet en dés 6-8 min avec le reste d'huile et du pimentón.", "Haricots verts au micro-ondes 6 min, puis mise en gamelle."],
-        batch: "Une plaque de four pleine = 3 gamelles (1,2 kg de pommes de terre)." },
-      { name: "Skyr, beurre de cacahuète & pomme", ing: [["skyr", 250, "250 g"], ["pb", 20, "20 g"], ["pomme", 150, "1"]],
-        steps: ["Mélange le beurre de cacahuète dans le skyr, pomme en lamelles à tremper dedans."] },
-      { name: "Riz sauté dinde & œuf (wok)", ing: [["riz", 130, "130 g cru"], ["dinde", 180, "180 g"], ["oeuf", 55, "1"], ["poelee", 200, "200 g"], ["soja", 15, "1 c. à s."], ["huile", 5, "½ c. à s."]],
-        steps: ["Idéalement, cuis le riz la veille : froid, il ne colle pas au wok.", "Saisis la dinde en lanières dans l'huile à feu vif 5 min, réserve.", "Fais sauter la poêlée surgelée 5 min, pousse-la sur le côté et brouille l'œuf dans la poêle.", "Ajoute le riz, la dinde et la sauce soja, fais sauter 3 min."],
-        batch: "Pour 3 gamelles : 390 g de riz cru, 540 g de dinde, 3 œufs." }] },
-    { n: 4, t: "Épices & gratin", note: "Pancakes le matin, poulet façon tikka et un hachis parmentier à faire en plat.", meals: [
-      { name: "Pancakes avoine-banane", ing: [["avoine", 100, "100 g"], ["oeuf", 110, "2"], ["banane", 120, "1"], ["lait", 300, "100 + 200 ml"]],
+      { id: "pd-pancakes", name: "Pancakes avoine-banane", ing: [["avoine", 100, "100 g"], ["oeuf", 110, "2"], ["banane", 120, "1"], ["lait", 300, "100 + 200 ml"]],
         steps: ["Mixe l'avoine, les 2 œufs, la banane et 100 ml de lait avec une pincée de cannelle.", "Cuis 4-5 pancakes à la poêle antiadhésive, 2 min par face à feu moyen.", "Bois les 200 ml de lait restants à côté."],
         batch: "La pâte se garde 2 jours au frigo." },
-      { name: "Poulet façon tikka, riz & épinards", ing: [["riz", 120, "120 g cru"], ["poulet", 200, "200 g"], ["yaourt", 60, "½ pot"], ["epinards", 150, "150 g"], ["huile", 10, "1 c. à s."]],
-        steps: ["Mélange le poulet en dés avec le yaourt, 2 c. à c. de curry ou garam masala, ail, sel. 30 min de marinade minimum (ou la veille).", "Cuis le riz.", "Saisis le poulet mariné dans l'huile 8 min à feu moyen-vif.", "Réchauffe les épinards surgelés dans la même poêle 5 min, sel."],
-        batch: "Fais mariner les 3 portions ensemble dans une boîte la veille au soir." },
-      { name: "Fromage blanc, amandes & clémentines", ing: [["fblanc", 250, "250 g"], ["amandes", 35, "35 g"], ["clem", 150, "2"]],
+      { id: "pd-omelette", name: "Omelette jambon-fromage & tartines", ing: [["oeuf", 165, "3"], ["jambon", 60, "2 tranches"], ["emmental", 20, "20 g"], ["pain", 120, "3-4 tranches"], ["clem", 150, "2"]],
+        steps: ["Bats les 3 œufs avec sel et poivre, ajoute le jambon coupé en morceaux.", "Verse dans une poêle antiadhésive chaude, parsème d'emmental.", "Plie l'omelette quand le dessus est presque pris (3-4 min).", "Pain grillé et clémentines à côté."] },
+      { id: "pd-bowlskyr", name: "Bowl skyr, avoine & fruits rouges", ing: [["skyr", 250, "250 g"], ["avoine", 80, "80 g"], ["frouges", 100, "100 g"], ["miel", 15, "1 c. à s."], ["amandes", 30, "30 g"]],
+        steps: ["Décongèle les fruits rouges 1 min au micro-ondes (ou la veille au frigo).", "Dans un bol : skyr, avoine, fruits rouges et leur jus.", "Miel et amandes concassées par-dessus."] },
+      { id: "pd-porrcacao", name: "Porridge protéiné au cacao", ing: [["avoine", 90, "90 g"], ["lait", 300, "300 ml"], ["whey", 25, "1 dose"], ["cacao", 10, "1 c. à s."], ["banane", 120, "1"]],
+        steps: ["Cuis l'avoine dans le lait 3-4 min (casserole ou micro-ondes).", "Hors du feu, ajoute la whey et le cacao en remuant bien (la whey ne doit pas cuire).", "Banane en rondelles par-dessus."] },
+      { id: "pd-shaker", name: "Shake petit-déj au mixeur", ing: [["lait", 400, "400 ml"], ["avoine", 70, "70 g"], ["banane", 120, "1"], ["pb", 20, "1 c. à s."], ["whey", 20, "⅔ dose"]],
+        steps: ["Mets tout dans le mixeur.", "Mixe 30-40 s jusqu'à ce que ce soit lisse.", "Idéal les matins pressés : ça se boit en 5 min."] },
+      { id: "pd-wrap", name: "Wraps œufs-jambon", ing: [["tortilla", 120, "2 wraps"], ["oeuf", 165, "3"], ["jambon", 40, "1 tranche"], ["emmental", 15, "15 g"], ["clem", 150, "2"]],
+        steps: ["Brouille les œufs à la poêle avec le jambon en dés.", "Réchauffe les wraps 20 s à la poêle ou au micro-ondes.", "Garnis avec les œufs et l'emmental, roule. Clémentines à côté."] },
+      { id: "pd-painperdu", name: "Pain perdu protéiné & fruits rouges", ing: [["pain", 150, "5 tranches"], ["oeuf", 110, "2"], ["lait", 150, "150 ml"], ["whey", 20, "⅔ dose"], ["frouges", 100, "100 g"], ["miel", 10, "1 c. à c."]],
+        steps: ["Fouette les œufs, le lait, la whey et une pincée de cannelle.", "Trempe les tranches de pain 10 s de chaque côté.", "Dore-les 2 min par face à la poêle antiadhésive.", "Fruits rouges tiédis et miel par-dessus."] }
+    ],
+    midi: [
+      { id: "mi-poulriz", name: "Poulet paprika, riz & haricots verts", ing: [["riz", 120, "120 g cru"], ["poulet", 200, "200 g"], ["hverts", 150, "150 g"], ["huile", 10, "1 c. à s."]],
+        steps: ["Cuis le riz 11-12 min dans l'eau salée, égoutte.", "Coupe le poulet en dés et saisis-le 6-8 min à feu vif dans l'huile avec 1 c. à c. de paprika, ail en poudre, sel.", "Ajoute les haricots verts surgelés dans la poêle 6-8 min, ou passe-les au micro-ondes.", "Répartis en gamelles : riz, poulet, légumes."],
+        batch: "Pour 3 gamelles : 360 g de riz, 600 g de poulet, 450 g de haricots." },
+      { id: "mi-patesthon", name: "Pâtes thon, tomate & poivrons", ing: [["pates", 120, "120 g crues"], ["thon", 140, "140 g égoutté"], ["passata", 150, "150 g"], ["poivrons", 150, "150 g"], ["huile", 10, "1 c. à s."]],
+        steps: ["Cuis les pâtes al dente.", "Fais revenir les poivrons surgelés 5 min dans l'huile avec ail en poudre et origan.", "Ajoute la passata, 5 min de mijotage, puis le thon émietté hors du feu.", "Mélange avec les pâtes, sel et poivre."] },
+      { id: "mi-poulpdt", name: "Poulet pimentón & pommes de terre air fryer", ing: [["pdt", 450, "450 g"], ["poulet", 200, "200 g"], ["hverts", 150, "150 g"], ["huile", 15, "1,5 c. à s."]],
+        steps: ["Coupe les pommes de terre en cubes (avec la peau), mélange avec 1 c. à s. d'huile, du pimentón et du sel.", "Air fryer 20-22 min à 200 °C en secouant le panier à mi-cuisson.", "Pendant ce temps, saisis le poulet en dés 6-8 min avec le reste d'huile et du pimentón.", "Haricots verts au micro-ondes 6 min, puis mise en gamelle."],
+        batch: "Fais les pommes de terre en 2 fournées pour 3 gamelles : le panier ne doit pas être trop rempli." },
+      { id: "mi-tikka", name: "Poulet façon tikka, riz & épinards", ing: [["riz", 120, "120 g cru"], ["poulet", 200, "200 g"], ["yaourt", 60, "½ pot"], ["epinards", 150, "150 g"], ["huile", 10, "1 c. à s."]],
+        steps: ["Mélange le poulet en dés avec le yaourt, 2 c. à c. de curry ou garam masala, ail et sel. 30 min de marinade minimum (ou la veille).", "Cuis le riz.", "Saisis le poulet mariné dans l'huile 8 min à feu moyen-vif.", "Réchauffe les épinards surgelés dans la même poêle 5 min, sel."] },
+      { id: "mi-wrappoul", name: "Wraps poulet, maïs & tomates cerises", ing: [["tortilla", 180, "3 wraps"], ["poulet", 160, "160 g"], ["mais", 60, "60 g"], ["tcerises", 100, "8-10"], ["skyr", 60, "60 g (sauce)"]],
+        steps: ["Saisis le poulet en lanières 6-8 min avec paprika, ail et sel.", "Sauce : skyr + ail en poudre + sel + poivre (+ un peu de citron si tu en as).", "Garnis les wraps : sauce, poulet, maïs, tomates cerises coupées en deux.", "Roule serré et emballe dans du papier alu pour la gamelle. Se mange froid ou réchauffé."] },
+      { id: "mi-bowlcoree", name: "Bowl bœuf soja-miel, riz & brocolis", ing: [["riz", 130, "130 g cru"], ["hache", 150, "150 g"], ["brocoli", 150, "150 g"], ["soja", 15, "1 c. à s."], ["miel", 10, "1 c. à c."], ["huile", 5, "½ c. à s."]],
+        steps: ["Cuis le riz.", "Dore le haché dans l'huile 5 min avec ail en poudre.", "Ajoute la sauce soja et le miel, laisse caraméliser 2 min.", "Brocolis au micro-ondes 6 min. Assemble : riz, bœuf, brocolis."] },
+      { id: "mi-salpates", name: "Salade de pâtes poulet, mozza & tomates", ing: [["pates", 110, "110 g crues"], ["poulet", 150, "150 g"], ["mozza", 60, "½ boule"], ["tcerises", 150, "12"], ["huile", 10, "1 c. à s."]],
+        steps: ["Cuis les pâtes, rince-les à l'eau froide.", "Saisis le poulet en dés 6-8 min, laisse refroidir.", "Mélange pâtes, poulet, mozzarella en dés, tomates cerises, huile, origan, sel, poivre.", "Se mange froid : parfait pour une gamelle sans micro-ondes."] },
+      { id: "mi-porcsoja", name: "Porc caramélisé soja-miel & riz sauté", ing: [["riz", 115, "115 g cru"], ["porc", 180, "180 g"], ["poelee", 200, "200 g"], ["soja", 15, "1 c. à s."], ["miel", 10, "1 c. à c."], ["huile", 5, "½ c. à s."]],
+        steps: ["Cuis le riz.", "Coupe le porc en lanières, saisis-le 5 min dans l'huile.", "Ajoute la poêlée surgelée 5 min, puis la sauce soja et le miel, 2 min pour caraméliser.", "Sers sur le riz."] },
+      { id: "mi-curry", name: "Curry poulet-pois chiches au lait de coco", ing: [["riz", 100, "100 g cru"], ["poulet", 150, "150 g"], ["poischiches", 100, "100 g"], ["coco", 100, "100 ml"], ["epinards", 100, "100 g"]],
+        steps: ["Cuis le riz.", "Saisis le poulet en dés 5 min dans une poêle antiadhésive avec 2 c. à c. de curry.", "Ajoute les pois chiches rincés, les épinards et le lait de coco, mijote 8 min.", "Sel, et sers sur le riz."],
+        batch: "Le curry se congèle très bien en portions." },
+      { id: "mi-semoule", name: "Semoule poulet, carottes & courgettes", ing: [["semoule", 100, "100 g"], ["poulet", 180, "180 g"], ["carottes", 150, "2"], ["courgette", 150, "1 petite"], ["poischiches", 60, "60 g"], ["huile", 5, "½ c. à s."]],
+        steps: ["Coupe carottes et courgette en dés, fais-les revenir 8 min dans l'huile avec cumin, paprika, sel.", "Ajoute le poulet en dés et les pois chiches, 7 min de plus.", "Semoule : verse le même volume d'eau bouillante salée, couvre 5 min, égraine à la fourchette.", "Assemble en gamelle."] }
+    ],
+    coll: [
+      { id: "co-skyramandes", name: "Skyr, amandes & pomme", ing: [["skyr", 250, "250 g"], ["amandes", 30, "30 g"], ["pomme", 150, "1"]],
+        steps: ["Tout se mange tel quel. Coupe la pomme dans le skyr si tu préfères en bol."] },
+      { id: "co-fbnoix", name: "Fromage blanc, noix & clémentines", ing: [["fblanc", 250, "250 g"], ["noix", 30, "30 g"], ["clem", 150, "2"]],
+        steps: ["Noix concassées sur le fromage blanc, clémentines à côté."] },
+      { id: "co-skyrpb", name: "Skyr, beurre de cacahuète & pomme", ing: [["skyr", 250, "250 g"], ["pb", 20, "20 g"], ["pomme", 150, "1"]],
+        steps: ["Mélange le beurre de cacahuète dans le skyr, pomme en lamelles à tremper dedans."] },
+      { id: "co-fbamandes", name: "Fromage blanc, amandes & clémentines", ing: [["fblanc", 250, "250 g"], ["amandes", 35, "35 g"], ["clem", 150, "2"]],
         steps: ["Fromage blanc en bol, amandes et clémentines à côté."] },
-      { name: "Hachis parmentier léger", ing: [["pdt", 400, "400 g"], ["hache", 160, "160 g"], ["lait", 80, "80 ml"], ["carottes", 150, "150 g"], ["emmental", 20, "20 g"], ["huile", 5, "½ c. à s."]],
-        steps: ["Épluche les pommes de terre, cuis-les 20 min à l'eau salée, écrase-les avec le lait chaud, sel et poivre.", "Râpe ou coupe finement les carottes, fais-les revenir 5 min dans l'huile, ajoute le haché et fais dorer 5 min.", "Dans un plat : viande-carottes au fond, purée dessus, emmental.", "20 min au four à 200 °C, puis découpe en parts."],
-        batch: "Un plat pour 4 parts : 1,6 kg de pommes de terre, 640 g de haché, 600 g de carottes." }] }
-  ];
+      { id: "co-shaker", name: "Shaker whey, lait & banane", ing: [["whey", 30, "1 dose"], ["lait", 300, "300 ml"], ["banane", 120, "1"]],
+        steps: ["Whey + lait dans le shaker, secoue 20 s.", "La banane à côté (ou tout au mixeur pour un milkshake)."] },
+      { id: "co-galettes", name: "Galettes de riz, beurre de cacahuète & skyr", ing: [["galettes", 30, "3 galettes"], ["pb", 20, "20 g"], ["skyr", 150, "150 g"], ["banane", 60, "½"]],
+        steps: ["Tartine le beurre de cacahuète sur les galettes, rondelles de banane dessus.", "Le skyr à côté."] },
+      { id: "co-tartjambon", name: "Tartines jambon-fromage", ing: [["pain", 70, "2 tranches"], ["jambon", 60, "2 tranches"], ["emmental", 15, "15 g"], ["clem", 150, "2"]],
+        steps: ["Garnis le pain de jambon et d'emmental.", "Passe 3-4 min à l'air fryer à 180 °C pour un croque, ou mange froid.", "Clémentines à côté."] },
+      { id: "co-skyrcacao", name: "Skyr cacao & fruits rouges", ing: [["skyr", 250, "250 g"], ["cacao", 10, "1 c. à s."], ["miel", 10, "1 c. à c."], ["frouges", 100, "100 g"], ["amandes", 20, "20 g"]],
+        steps: ["Mélange le cacao et le miel dans le skyr.", "Fruits rouges (tiédis 1 min au micro-ondes) et amandes par-dessus."] },
+      { id: "co-oeufs", name: "Œufs durs, pain & clémentines", ing: [["oeuf", 110, "2"], ["pain", 60, "2 tranches"], ["clem", 150, "2"]],
+        steps: ["Cuis les œufs 9 min dans l'eau bouillante, refroidis-les à l'eau froide.", "Ils se gardent 4-5 jours au frigo avec la coquille : fais-en 6 d'un coup."] },
+      { id: "co-mugcake", name: "Mug cake protéiné au chocolat", ing: [["avoine", 40, "40 g"], ["oeuf", 55, "1"], ["whey", 20, "⅔ dose"], ["cacao", 5, "1 c. à c."], ["lait", 50, "50 ml"], ["choco", 10, "1 carré"]],
+        steps: ["Mixe l'avoine en farine (ou utilise-la telle quelle).", "Dans un grand mug : avoine, œuf, whey, cacao, lait, mélange bien.", "Enfonce le carré de chocolat au centre.", "Micro-ondes 1 min 30 à puissance max, laisse tiédir 2 min."] }
+    ],
+    soir: [
+      { id: "so-bolo", name: "Pâtes bolognaise express & brocolis", ing: [["pates", 125, "125 g crues"], ["hache", 150, "150 g"], ["passata", 150, "150 g"], ["brocoli", 150, "150 g"], ["emmental", 20, "20 g"]],
+        steps: ["Fais dorer le haché 5 min à la poêle sans matière grasse, en l'émiettant.", "Ajoute la passata, 1 c. à c. d'herbes de Provence, sel, poivre, et laisse mijoter 10 min.", "Cuis les pâtes al dente, et les brocolis 6 min au micro-ondes avec un fond d'eau.", "Mélange pâtes et sauce, brocolis à côté, emmental dessus."],
+        batch: "Pour 3 gamelles : 375 g de pâtes, 450 g de haché, 450 g de passata." },
+      { id: "so-chili", name: "Chili con carne & riz", ing: [["riz", 100, "100 g cru"], ["hache", 160, "160 g"], ["hrouges", 100, "100 g égouttés"], ["passata", 150, "150 g"], ["poivrons", 100, "100 g"], ["huile", 5, "½ c. à s."]],
+        steps: ["Fais revenir les poivrons dans l'huile 3 min, ajoute le haché et fais dorer 5 min.", "Ajoute 1 c. à c. de cumin, 1 c. à c. de paprika, une pincée de piment, sel.", "Verse la passata et les haricots rouges rincés, mijote 15 min à couvert.", "Cuis le riz à part et sers le chili dessus."],
+        batch: "Le chili est meilleur réchauffé : fais-en 3-4 portions d'un coup." },
+      { id: "so-wok", name: "Riz sauté dinde & œuf (wok)", ing: [["riz", 120, "120 g cru"], ["dinde", 160, "160 g"], ["oeuf", 55, "1"], ["poelee", 200, "200 g"], ["soja", 15, "1 c. à s."], ["huile", 5, "½ c. à s."]],
+        steps: ["Idéalement, cuis le riz la veille : froid, il ne colle pas.", "Saisis la dinde en lanières dans l'huile à feu vif 5 min, réserve.", "Fais sauter la poêlée surgelée 5 min, pousse-la sur le côté et brouille l'œuf dans la poêle.", "Ajoute le riz, la dinde et la sauce soja, fais sauter 3 min."] },
+      { id: "so-parmentier", name: "Parmentier express (air fryer)", ing: [["pdt", 450, "450 g"], ["hache", 170, "170 g"], ["lait", 80, "80 ml"], ["carottes", 150, "2"], ["emmental", 25, "25 g"]],
+        steps: ["Pommes de terre épluchées en cubes : 10-12 min au micro-ondes dans un bol couvert avec un fond d'eau, puis écrase-les avec le lait chaud, sel, poivre.", "Carottes râpées revenues 5 min à la poêle, puis le haché 5 min.", "Dans un petit plat qui rentre dans l'air fryer : viande au fond, purée dessus, emmental.", "Air fryer 8 min à 190 °C pour gratiner."] },
+      { id: "so-saumon", name: "Saumon soja-miel, riz & brocolis", ing: [["riz", 110, "110 g cru"], ["saumon", 150, "1 pavé"], ["brocoli", 150, "150 g"], ["soja", 10, "2 c. à c."], ["huile", 5, "½ c. à s."]],
+        steps: ["Cuis le riz.", "Pavé de saumon (décongelé) badigeonné de soja : air fryer 10-12 min à 190 °C, ou poêle 4 min par face.", "Brocolis au micro-ondes 6 min, filet d'huile.", "Sers ensemble."] },
+      { id: "so-burger", name: "Burger bowl & frites air fryer", ing: [["pdt", 500, "500 g"], ["hache", 160, "160 g"], ["tcerises", 100, "8"], ["emmental", 20, "20 g"], ["huile", 10, "1 c. à s."]],
+        steps: ["Frites : pommes de terre en bâtonnets, 1 c. à s. d'huile, sel, paprika. Air fryer 20-22 min à 200 °C en secouant.", "Forme un steak avec le haché, cuis-le 3-4 min par face, emmental dessus en fin de cuisson.", "Bowl : frites, steak émietté, tomates cerises, un peu de moutarde ou de ketchup si tu veux."] },
+      { id: "so-patespoul", name: "Pâtes crémeuses poulet-champignons", ing: [["pates", 120, "120 g crues"], ["poulet", 150, "150 g"], ["champi", 150, "150 g"], ["lait", 100, "100 ml"], ["emmental", 25, "25 g"], ["huile", 5, "½ c. à s."]],
+        steps: ["Cuis les pâtes.", "Dore les champignons à feu vif dans l'huile 5 min, ajoute le poulet en dés 6 min.", "Verse le lait et l'emmental, laisse épaissir 2-3 min en remuant, ail, sel, poivre.", "Mélange avec les pâtes."] },
+      { id: "so-dahl", name: "Dahl de lentilles au poulet & riz", ing: [["lentilles", 150, "150 g"], ["riz", 110, "110 g cru"], ["poulet", 130, "130 g"], ["coco", 80, "80 ml"], ["epinards", 100, "100 g"]],
+        steps: ["Cuis le riz.", "Saisis le poulet en dés 5 min avec 2 c. à c. de curry et du cumin.", "Ajoute les lentilles rincées, les épinards, le lait de coco et 50 ml d'eau, mijote 8 min.", "Sel, et sers avec le riz."] },
+      { id: "so-tacos", name: "Wraps de bœuf façon tacos", ing: [["tortilla", 120, "2 wraps"], ["hache", 170, "170 g"], ["mais", 60, "60 g"], ["poivrons", 100, "100 g"], ["emmental", 30, "30 g"], ["passata", 50, "3 c. à s."]],
+        steps: ["Fais revenir les poivrons 3 min, ajoute le haché, cumin, paprika, sel, 5 min.", "Ajoute la passata et le maïs, 2 min.", "Garnis les wraps, emmental dessus, roule.", "Air fryer 4-5 min à 190 °C pour les rendre croustillants (facultatif)."] },
+      { id: "so-omelette", name: "Omelette patate douce & champignons", ing: [["patdouce", 300, "1 grosse"], ["oeuf", 220, "4"], ["champi", 100, "100 g"], ["emmental", 20, "20 g"], ["pain", 50, "2 tranches"]],
+        steps: ["Patate douce en cubes : air fryer 15 min à 200 °C (ou micro-ondes 6 min puis poêle).", "Dore les champignons 4 min à la poêle.", "Ajoute la patate douce, verse les 4 œufs battus, emmental, couvre 5 min à feu doux.", "Pain à côté."] }
+    ]
+  };
 
   /* ---------- Programme 24 semaines (Upper/Lower, Basic Fit) ---------- */
   var P12 = {
@@ -204,5 +298,5 @@ window.CLB_DATA = (function () {
   ];
 
   return { FOOD: FOOD, PRICES: PRICES, PRICES_DATE: PRICES_DATE, SPICES: SPICES, RNAME: RNAME,
-    MOMENTS: MOMENTS, MOMENT_SHORT: MOMENT_SHORT, MENUS: MENUS, BLOCKS: BLOCKS, GENERAL: GENERAL };
+    MOMENTS: MOMENTS, RECIPES: RECIPES, BLOCKS: BLOCKS, GENERAL: GENERAL };
 })();
