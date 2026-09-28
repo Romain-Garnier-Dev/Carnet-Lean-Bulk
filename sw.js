@@ -1,5 +1,5 @@
 /* Service worker : l'app fonctionne hors ligne (utile dans les rayons). */
-var VERSION = "clb-v2";
+var VERSION = "clb-v3";
 var SHELL = [
   "./", "index.html", "styles.css", "data.js", "app.js", "manifest.webmanifest",
   "fonts/barlow-condensed-latin-600-normal.woff2", "fonts/barlow-condensed-latin-700-normal.woff2",

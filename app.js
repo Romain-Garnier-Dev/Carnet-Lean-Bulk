@@ -2,7 +2,7 @@
 (function () {
   "use strict";
   var D = window.CLB_DATA;
-  var APP_VERSION = "1.1.0";
+  var APP_VERSION = "1.2.0";
   var STORE_KEY = "clb.state.v1";
 
   /* ================= utilitaires ================= */
@@ -113,6 +113,12 @@
   var MK = D.MOMENTS.map(function (m) { return m.k; });
   var RBY = {};
   MK.forEach(function (k) { D.RECIPES[k].forEach(function (r) { r.m = k; RBY[r.id] = r; }); });
+  /* Midi et soir partagent les mêmes gamelles : celles du moment choisi d'abord, puis les autres. */
+  function recipesFor(m) {
+    if (m === "midi") return D.RECIPES.midi.concat(D.RECIPES.soir);
+    if (m === "soir") return D.RECIPES.soir.concat(D.RECIPES.midi);
+    return D.RECIPES[m];
+  }
   var DEFAULT_PLAN = { pd: { "pd-porridge": 4, "pd-pancakes": 3 }, midi: { "mi-poulriz": 4, "mi-tikka": 3 }, coll: { "co-skyramandes": 4, "co-fbnoix": 3 }, soir: { "so-bolo": 4, "so-chili": 3 } };
   function macros(ing) { var t = [0, 0, 0, 0]; ing.forEach(function (x) { var f = D.FOOD[x[0]]; for (var i = 0; i < 4; i++) t[i] += f.n[i] * x[1] / 100; }); return t; }
   function recipeName(id) { return id === "libre" ? "Repas libre (hors plan)" : RBY[id] ? RBY[id].name : "Recette supprimée"; }
@@ -133,7 +139,7 @@
   function suggest(m, d) {
     var ws = mondayOf(d), p = planFor(ws)[m] || {}, best = null, bestLeft = -Infinity;
     Object.keys(p).forEach(function (id) { if (!RBY[id] || !p[id]) return; var left = p[id] - eatenInWeek(ws, id, d); if (left > bestLeft) { bestLeft = left; best = id; } });
-    return best || D.RECIPES[m][0].id;
+    return best || recipesFor(m)[0].id;
   }
   function pickFor(m, d) { var x = S.day[d] && S.day[d][m]; return (x && x.r) || suggest(m, d); }
   function isDone(m, d) { var x = S.day[d] && S.day[d][m]; return !!(x && x.done); }
@@ -525,13 +531,13 @@
       '<p class="small muted">Choisis combien de fois tu manges chaque recette' + (weekOff ? ' la semaine prochaine' : ' cette semaine') + ' : la liste de courses se calcule dessus. ' +
       (cnt === 7 ? '<span class="chip good">7/7 prévus</span>' : '<span class="chip warn">' + cnt + '/7 prévus</span>') +
       (planIsCopy(ws) ? ' <span class="tiny">Planning repris de la semaine précédente.</span>' : '') + '</p>';
-    html += D.RECIPES[repasSeg].map(function (r) {
+    html += recipesFor(repasSeg).map(function (r) {
       var n = (p[repasSeg] && p[repasSeg][r.id]) || 0, mc = macros(r.ing);
       return '<article class="meal' + (n ? ' planned' : '') + '"><div class="meal-top"><div class="grow"><h3>' + esc(r.name) + '</h3><p class="small muted num">' + Math.round(mc[0]) + ' kcal · ' + Math.round(mc[1]) + ' g P · ' + Math.round(mc[2]) + ' g G · ' + Math.round(mc[3]) + ' g L</p></div>' +
         '<div class="stepper" role="group" aria-label="Portions de ' + esc(r.name) + '"><button data-step="-1" data-id="' + r.id + '" aria-label="Une portion de moins"' + (n ? '' : ' disabled') + '>−</button><span class="num">' + n + '</span><button data-step="1" data-id="' + r.id + '" aria-label="Une portion de plus">+</button></div></div>' +
         '<details class="fold"><summary>Ingrédients & recette</summary>' + recipeBody(r) + '</details></article>';
     }).join("");
-    html += '<section class="card"><h2>Organisation</h2><ul class="keys"><li>Deux sessions de cuisine : dimanche pour lundi-mercredi, mercredi soir pour jeudi-samedi.</li><li>Les gamelles se gardent 3-4 jours au frigo, sinon congèle-les le jour même.</li><li>Riz, pâtes et semoule pesés crus.</li><li>Chaque petit-déj tourne autour de 750 kcal, chaque gamelle autour de 800, chaque collation autour de 380 : tu peux combiner librement, tu restes vers 2700 kcal.</li></ul></section>';
+    html += '<section class="card"><h2>Organisation</h2><ul class="keys"><li>Deux sessions de cuisine : dimanche pour lundi-mercredi, mercredi soir pour jeudi-samedi.</li><li>Les gamelles se gardent 3-4 jours au frigo, sinon congèle-les le jour même.</li><li>Riz, pâtes et semoule pesés crus.</li><li>Les 20 gamelles sont communes au midi et au soir.</li><li>Chaque petit-déj tourne autour de 750 kcal, chaque gamelle autour de 800, chaque collation autour de 380 : tu peux combiner librement, tu restes vers 2700 kcal.</li></ul></section>';
     el.innerHTML = html;
   }
   $("view-repas").addEventListener("click", function (e) {
@@ -550,7 +556,7 @@
 
   function chooseSheet(m, d, after) {
     var mo = D.MOMENTS[MK.indexOf(m)], ws = mondayOf(d), p = planFor(ws)[m] || {}, cur = pickFor(m, d);
-    var planned = D.RECIPES[m].filter(function (r) { return p[r.id]; }), others = D.RECIPES[m].filter(function (r) { return !p[r.id]; });
+    var all = recipesFor(m), planned = all.filter(function (r) { return p[r.id]; }), others = all.filter(function (r) { return !p[r.id]; });
     function row(r, extra) {
       var mc = macros(r.ing);
       return '<button class="opt' + (r.id === cur ? ' sel' : '') + '" data-pick="' + r.id + '"><span class="grow"><span class="nm">' + esc(r.name) + '</span>' + (extra ? '<span class="tiny muted">' + extra + '</span>' : '') + '</span><span class="k num">' + Math.round(mc[0]) + ' kcal</span></button>';

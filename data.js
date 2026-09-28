@@ -133,9 +133,9 @@ window.CLB_DATA = (function () {
   /* Moments de la journée : clé, libellé, libellé court, objectif kcal indicatif */
   var MOMENTS = [
     { k: "pd", label: "Petit-déjeuner", short: "Petit-déj", kcal: 750 },
-    { k: "midi", label: "Midi · gamelle", short: "Midi", kcal: 780 },
+    { k: "midi", label: "Midi · gamelle", short: "Midi", kcal: 790 },
     { k: "coll", label: "Collation", short: "Collation", kcal: 380 },
-    { k: "soir", label: "Soir · gamelle", short: "Soir", kcal: 800 }
+    { k: "soir", label: "Soir · gamelle", short: "Soir", kcal: 790 }
   ];
 
   /* Recettes à la carte. Ingrédient : [clé, grammes, libellé affiché].
