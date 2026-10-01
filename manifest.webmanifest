@@ -1,7 +1,7 @@
 {
-  "name": "Carnet Lean Bulk",
-  "short_name": "Lean Bulk",
-  "description": "Programme, pesées, photos, repas et courses de ta prise de masse.",
+  "name": "Forge",
+  "short_name": "Forge",
+  "description": "Ton carnet de forme : objectif calorique, pesées, photos, repas et courses.",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",

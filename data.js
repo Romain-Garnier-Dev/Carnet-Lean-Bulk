@@ -1,4 +1,4 @@
-/* Carnet Lean Bulk — données statiques (aliments, recettes, prix, programme).
+/* Forge — données statiques (aliments, recettes, prix, programme).
    Les données personnelles (pesées, photos, cases cochées, prix corrigés) ne sont
    jamais dans ce fichier : elles restent sur l'iPhone. */
 
@@ -118,6 +118,19 @@ window.CLB_DATA = (function () {
     cacao:    { a: 9.00, l: 8.50, unit: "kg", ae: true },
     coco:     { a: 5.00, l: 4.50, unit: "L", ae: true }
   };
+
+  /* Magasins proposés. src : a = prix Alcampo, l = estimation Lidl, g = prix moyen estimé (Lidl + 12 %). */
+  var STORES = [
+    { id: "alcampo", name: "Alcampo", src: "a", es: true },
+    { id: "lidl", name: "Lidl", src: "l" },
+    { id: "aldi", name: "Aldi", src: "l" },
+    { id: "leclerc", name: "E.Leclerc", src: "g" },
+    { id: "carrefour", name: "Carrefour", src: "g" },
+    { id: "auchan", name: "Auchan", src: "g" },
+    { id: "intermarche", name: "Intermarché", src: "g" },
+    { id: "superu", name: "Super U", src: "g" },
+    { id: "mercadona", name: "Mercadona", src: "a", es: true }
+  ];
 
   var SPICES = [
     ["Paprika / pimentón", "pimentón"], ["Ail en poudre", "ajo en polvo"],
@@ -297,6 +310,6 @@ window.CLB_DATA = (function () {
     "Sommeil 7-9 h, créatine 3-5 g/jour, protéines 1,8-2,2 g/kg."
   ];
 
-  return { FOOD: FOOD, PRICES: PRICES, PRICES_DATE: PRICES_DATE, SPICES: SPICES, RNAME: RNAME,
+  return { STORES: STORES, FOOD: FOOD, PRICES: PRICES, PRICES_DATE: PRICES_DATE, SPICES: SPICES, RNAME: RNAME,
     MOMENTS: MOMENTS, RECIPES: RECIPES, BLOCKS: BLOCKS, GENERAL: GENERAL };
 })();

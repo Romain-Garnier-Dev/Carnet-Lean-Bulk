@@ -232,3 +232,27 @@ details.fold[open] summary::after{transform:rotate(-135deg)}
 .opt .nm{font-weight:600;font-size:14.5px}
 .opt .k{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap}
 .opt.sel{border-color:var(--red);background:var(--red-soft)}
+
+/* ---------- profil & objectif ---------- */
+.goalcard{position:relative;overflow:hidden}
+.goalcard svg.ribbon{position:absolute;right:-60px;top:-80px;width:220px;height:180px;opacity:.55;pointer-events:none}
+.goalcard > *:not(.ribbon){position:relative}
+.goalnums{gap:24px;align-items:flex-end}
+.ride{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.ride-seg button{padding:8px 2px;font-size:13px}
+.ride-seg button[aria-pressed="true"]{background:var(--red);color:#fff}
+.sheet.full{max-height:100vh;height:100%;border-radius:0;padding-top:calc(var(--top) + 18px)}
+.brand{display:flex;gap:14px;align-items:center}
+.brand .logo{width:56px;height:56px;border-radius:14px;flex:none;background:#0B0B0D url("icons/icon-192.png") center/cover;border:1px solid var(--line)}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chipbtn{appearance:none;border:1px solid var(--line2);background:var(--surface2);color:var(--ink);border-radius:999px;padding:8px 12px;font-size:14px;font-weight:600;cursor:pointer}
+.chipbtn[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff}
+.switch{display:flex;gap:10px;align-items:center;font-size:14px;cursor:pointer}
+.switch input{width:22px;height:22px;accent-color:var(--red);flex:none}
+.calc{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.calc .li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);font-size:14.5px}
+.calc .li:last-child{border-bottom:0}
+.calc .li b{font-family:var(--display);font-size:22px;white-space:nowrap}
+.calc .li.hl{background:var(--red-soft)}
+.calc .li.hl b{color:var(--red-hi)}
