@@ -58,6 +58,13 @@ window.CLB_DATA = (function () {
     choco:    { fr: "Chocolat noir 70 %", es: "chocolate negro 70 %", rayon: "Placard", n: [580, 8, 33, 42] },
     cacao:    { fr: "Cacao en poudre non sucré", es: "cacao puro en polvo", rayon: "Placard", n: [350, 20, 15, 20] },
     coco:     { fr: "Lait de coco light", es: "leche de coco light", rayon: "Placard", n: [70, 0.8, 2, 6.5], liquid: true },
+    cabillaud:{ fr: "Dos de cabillaud surgelés", es: "lomos de bacalao congelados", rayon: "Protéines", n: [82, 18, 0, 0.7] },
+    crevettes:{ fr: "Crevettes décortiquées surgelées", es: "gambas peladas congeladas", rayon: "Protéines", n: [90, 20, 0, 1] },
+    sardines: { fr: "Sardines en boîte (égouttées)", es: "sardinas en lata", rayon: "Protéines", n: [210, 25, 0, 12] },
+    tofu:     { fr: "Tofu nature ferme", es: "tofu natural", rayon: "Protéines", n: [120, 13, 2, 7] },
+    boeuf:    { fr: "Émincé / steak de bœuf", es: "filetes de ternera para saltear", rayon: "Protéines", n: [150, 22, 0, 6.5] },
+    cuisse:   { fr: "Hauts de cuisse de poulet désossés", es: "contramuslos de pollo deshuesados", rayon: "Protéines", n: [160, 18, 0, 9.5] },
+    avocat:   { fr: "Avocats", es: "aguacates", rayon: "Fruits & oléagineux", n: [160, 2, 9, 15] },
     whey:     { fr: "Whey", es: "proteína whey", rayon: "Déjà chez toi", n: [380, 78, 6, 5], stock: true }
   };
 
@@ -116,7 +123,14 @@ window.CLB_DATA = (function () {
     frouges:  { a: 4.50, l: 3.99, unit: "kg", ae: true },
     choco:    { a: 12.00, l: 10.00, unit: "kg", ae: true },
     cacao:    { a: 9.00, l: 8.50, unit: "kg", ae: true },
-    coco:     { a: 5.00, l: 4.50, unit: "L", ae: true }
+    coco:     { a: 5.00, l: 4.50, unit: "L", ae: true },
+    cabillaud:{ a: 9.50, l: 9.90, unit: "kg", ae: true },
+    crevettes:{ a: 12.00, l: 11.00, unit: "kg", ae: true },
+    sardines: { a: 9.00, l: 8.00, unit: "kg", ae: true },
+    tofu:     { a: 6.00, l: 5.50, unit: "kg", ae: true },
+    boeuf:    { a: 13.00, l: 12.50, unit: "kg", ae: true },
+    cuisse:   { a: 6.50, l: 7.00, unit: "kg", ae: true },
+    avocat:   { a: 4.50, l: 4.90, unit: "kg", ae: true }
   };
 
   /* Magasins proposés. src : a = prix Alcampo, l = estimation Lidl, g = prix moyen estimé (Lidl + 12 %). */
@@ -135,9 +149,10 @@ window.CLB_DATA = (function () {
   var SPICES = [
     ["Paprika / pimentón", "pimentón"], ["Ail en poudre", "ajo en polvo"],
     ["Herbes de Provence, origan", "hierbas provenzales, orégano"], ["Cumin", "comino"],
-    ["Curry ou garam masala", "curry"], ["Cannelle", "canela"], ["Sel, poivre", "sal, pimienta"]
+    ["Curry ou garam masala", "curry"], ["Cannelle", "canela"], ["Moutarde", "mostaza"], ["Sel, poivre", "sal, pimienta"]
   ];
 
+  var RNAME_EXTRA = { cabillaud: "Dos de cabillaud", crevettes: "Crevettes", sardines: "Sardines", cuisse: "Hauts de cuisse", avocat: "Avocat", boeuf: "Bœuf en lanières" };
   var RNAME = { banane: "Banane", pomme: "Pomme", clem: "Clémentines", pain: "Pain complet", yaourt: "Yaourt nature",
     hrouges: "Haricots rouges", thon: "Thon au naturel", poivrons: "Poivrons surgelés", hache: "Bœuf haché 5 %",
     tortilla: "Wraps", lentilles: "Lentilles cuites", poischiches: "Pois chiches", mais: "Maïs", saumon: "Pavé de saumon",
@@ -251,6 +266,87 @@ window.CLB_DATA = (function () {
     ]
   };
 
+
+  /* ---------- Recettes ajoutées (v2.1) ---------- */
+  RECIPES.pd.push(
+    { id: "pd-crepes", name: "Crêpes protéinées à la banane", ing: [["avoine", 60, "60 g"], ["oeuf", 110, "2"], ["lait", 250, "250 ml"], ["whey", 20, "⅔ dose"], ["banane", 120, "1"], ["miel", 10, "1 c. à c."]],
+      steps: ["Mixe l'avoine, les œufs, le lait et la whey jusqu'à obtenir une pâte fluide.", "Laisse reposer 5 min, puis cuis 4 crêpes fines à la poêle antiadhésive, 1 min par face.", "Garnis de rondelles de banane et d'un filet de miel."] },
+    { id: "pd-oeufsjambon", name: "Œufs brouillés, jambon & patate douce", ing: [["oeuf", 165, "3"], ["jambon", 60, "2 tranches"], ["patdouce", 350, "1 grosse"], ["huile", 10, "1 c. à s."], ["clem", 150, "2"]],
+      steps: ["Patate douce en petits cubes avec l'huile, sel et paprika : air fryer 15 min à 200 °C (prépare-la la veille pour aller plus vite).", "Brouille les œufs à la poêle avec le jambon coupé en lanières.", "Sers avec la patate douce, clémentines à côté."],
+      batch: "Fais cuire 3 patates douces d'un coup, elles se gardent 3 jours au frigo." },
+    { id: "pd-fbgranola", name: "Fromage blanc & granola maison", ing: [["fblanc", 300, "300 g"], ["avoine", 80, "80 g"], ["miel", 15, "1 c. à s."], ["noix", 20, "20 g"], ["banane", 120, "1"]],
+      steps: ["Granola express : fais dorer l'avoine et les noix concassées 3-4 min à la poêle sans matière grasse, ajoute le miel hors du feu.", "Laisse refroidir 2 min pour que ça croustille.", "Sur le fromage blanc avec la banane en rondelles."],
+      batch: "Fais le granola pour 5 jours d'un coup et garde-le dans un bocal." },
+    { id: "pd-avocat", name: "Tartines avocat & œufs", ing: [["pain", 140, "4-5 tranches"], ["avocat", 70, "½"], ["oeuf", 110, "2"], ["skyr", 150, "150 g"], ["clem", 75, "1"]],
+      steps: ["Toaste le pain, écrase l'avocat dessus avec sel, poivre et un peu de piment.", "Cuis les œufs au plat ou mollets (6 min dans l'eau bouillante), pose-les sur les tartines.", "Le skyr et la clémentine à côté."] },
+    { id: "pd-rizlait", name: "Riz au lait protéiné & fruits rouges", ing: [["riz", 100, "100 g cru"], ["lait", 400, "400 ml"], ["whey", 25, "1 dose"], ["miel", 15, "1 c. à s."], ["frouges", 100, "100 g"]],
+      steps: ["Cuis le riz dans le lait à feu doux 25 min en remuant souvent, avec une pincée de cannelle.", "Hors du feu, ajoute la whey et le miel.", "Sers tiède ou froid avec les fruits rouges."],
+      batch: "Prépare 3 portions d'un coup : ça se garde 3 jours au frigo et se mange froid." }
+  );
+  RECIPES.midi.push(
+    { id: "mi-cabillaud", name: "Cabillaud ail-citron, riz & haricots verts", ing: [["riz", 120, "120 g cru"], ["cabillaud", 220, "2 dos"], ["hverts", 150, "150 g"], ["huile", 15, "1,5 c. à s."]],
+      steps: ["Cuis le riz.", "Dos de cabillaud (décongelés et séchés) badigeonnés d'huile, ail en poudre, sel, poivre : air fryer 10-12 min à 190 °C ou poêle 4 min par face.", "Haricots verts au micro-ondes 6 min avec le reste d'huile.", "Un filet de citron si tu en as."] },
+    { id: "mi-crevettes", name: "Pâtes aux crevettes, ail & courgettes", ing: [["pates", 120, "120 g crues"], ["crevettes", 180, "180 g"], ["courgette", 150, "1 petite"], ["huile", 15, "1,5 c. à s."]],
+      steps: ["Cuis les pâtes.", "Fais revenir la courgette en dés 5 min dans l'huile.", "Ajoute les crevettes décongelées, ail en poudre, paprika, sel : 3-4 min à feu vif.", "Mélange avec les pâtes."] },
+    { id: "mi-boeufpoiv", name: "Bœuf sauté aux poivrons & riz", ing: [["riz", 120, "120 g cru"], ["boeuf", 170, "170 g"], ["poivrons", 150, "150 g"], ["soja", 10, "2 c. à c."], ["huile", 5, "½ c. à s."]],
+      steps: ["Cuis le riz.", "Saisis le bœuf en lanières très chaud 2-3 min dans l'huile, réserve.", "Fais sauter les poivrons 5 min, remets le bœuf et la sauce soja 1 min.", "Sers sur le riz."] },
+    { id: "mi-tofu", name: "Tofu croustillant soja-miel, riz & brocolis", ing: [["riz", 120, "120 g cru"], ["tofu", 200, "1 bloc"], ["brocoli", 150, "150 g"], ["soja", 15, "1 c. à s."], ["miel", 10, "1 c. à c."]],
+      steps: ["Égoutte et sèche bien le tofu, coupe-le en cubes.", "Air fryer 15 min à 200 °C en secouant à mi-cuisson, jusqu'à ce qu'il soit doré.", "Mélange avec la sauce soja et le miel dans la poêle chaude 1 min.", "Riz et brocolis (micro-ondes 6 min) à côté."] },
+    { id: "mi-fajitas", name: "Fajitas de dinde aux poivrons", ing: [["tortilla", 150, "2-3 wraps"], ["dinde", 180, "180 g"], ["poivrons", 150, "150 g"], ["skyr", 60, "60 g (sauce)"], ["huile", 5, "½ c. à s."]],
+      steps: ["Dinde en lanières avec paprika, cumin, ail et sel.", "Saisis-la 5 min dans l'huile, ajoute les poivrons 5 min.", "Garnis les wraps chauds, avec le skyr en guise de crème."] }
+  );
+  RECIPES.soir.push(
+    { id: "so-sardines", name: "Pâtes aux sardines & tomates cerises", ing: [["pates", 130, "130 g crues"], ["sardines", 100, "1 boîte"], ["tcerises", 150, "12"], ["passata", 100, "100 g"], ["huile", 5, "½ c. à s."]],
+      steps: ["Cuis les pâtes.", "Fais revenir les tomates cerises coupées en deux 3 min dans l'huile, ajoute la passata et l'ail.", "Émiette les sardines égouttées dans la sauce, 1 min.", "Mélange avec les pâtes, poivre."] },
+    { id: "so-porcmout", name: "Porc à la moutarde, patate douce & haricots verts", ing: [["patdouce", 430, "1 grosse"], ["porc", 200, "200 g"], ["hverts", 150, "150 g"], ["huile", 10, "1 c. à s."]],
+      steps: ["Patate douce en cubes : air fryer 15-18 min à 200 °C avec la moitié de l'huile.", "Saisis le porc en tranches 3 min par face dans le reste d'huile.", "Hors du feu, enrobe-le d'1 c. à s. de moutarde délayée dans un peu d'eau.", "Haricots verts au micro-ondes 6 min."] },
+    { id: "so-sincarne", name: "Chili sin carne lentilles & haricots", ing: [["riz", 85, "85 g cru"], ["lentilles", 150, "150 g"], ["hrouges", 100, "100 g égouttés"], ["passata", 150, "150 g"], ["poivrons", 100, "100 g"], ["emmental", 30, "30 g"]],
+      steps: ["Fais revenir les poivrons 3 min, ajoute cumin, paprika, piment et sel.", "Ajoute les lentilles et haricots rincés et la passata, mijote 10 min.", "Sers sur le riz avec l'emmental qui fond dessus."],
+      batch: "Se congèle très bien : fais-en 4 portions." },
+    { id: "so-cuisses", name: "Cuisses de poulet air fryer, pommes de terre & carottes", ing: [["pdt", 450, "450 g"], ["cuisse", 200, "2 hauts de cuisse"], ["carottes", 150, "2"], ["huile", 5, "½ c. à s."]],
+      steps: ["Pommes de terre et carottes en morceaux avec l'huile, sel et herbes de Provence.", "Hauts de cuisse désossés frottés de paprika, ail et sel.", "Tout dans l'air fryer 22-25 min à 190 °C, en secouant à mi-cuisson."] },
+    { id: "so-shakshuka", name: "Shakshuka (œufs à la tomate) & pain", ing: [["oeuf", 220, "4"], ["passata", 200, "200 g"], ["poivrons", 150, "150 g"], ["pain", 120, "4 tranches"], ["emmental", 20, "20 g"]],
+      steps: ["Fais revenir les poivrons 5 min, ajoute la passata, cumin, paprika, sel : 5 min.", "Creuse 4 puits et casse un œuf dans chacun.", "Couvre et laisse cuire 6-8 min à feu doux, jusqu'à ce que les blancs soient pris.", "Emmental dessus, pain grillé pour saucer."] }
+  );
+  RECIPES.coll.push(
+    { id: "co-thongal", name: "Galettes de riz au thon & skyr", ing: [["galettes", 30, "3 galettes"], ["thon", 100, "1 boîte"], ["skyr", 100, "100 g"], ["pomme", 150, "1"]],
+      steps: ["Mélange le thon avec le skyr, sel, poivre (et un peu de moutarde si tu aimes).", "Tartine sur les galettes de riz. La pomme à côté."] },
+    { id: "co-smoothie", name: "Smoothie skyr & fruits rouges", ing: [["skyr", 250, "250 g"], ["lait", 150, "150 ml"], ["frouges", 100, "100 g"], ["banane", 100, "1 petite"], ["miel", 10, "1 c. à c."]],
+      steps: ["Tout au mixeur 30 s.", "Avec les fruits rouges encore congelés, ça fait un smoothie bien frais."] },
+    { id: "co-wrapjambon", name: "Wrap jambon-fromage", ing: [["tortilla", 60, "1 wrap"], ["jambon", 80, "2-3 tranches"], ["emmental", 15, "15 g"], ["pomme", 150, "1"]],
+      steps: ["Garnis le wrap de jambon et d'emmental, roule.", "3 min à l'air fryer à 180 °C pour le rendre croustillant, ou nature. La pomme à côté."] },
+    { id: "co-houmous", name: "Houmous maison, pain & œuf dur", ing: [["poischiches", 100, "100 g"], ["huile", 10, "1 c. à s."], ["pain", 40, "1-2 tranches"], ["oeuf", 55, "1"]],
+      steps: ["Mixe les pois chiches rincés avec l'huile, 2-3 c. à s. d'eau, ail, cumin et sel jusqu'à ce que ce soit lisse.", "Tartine sur le pain, avec l'œuf dur coupé en rondelles."],
+      batch: "Fais le houmous pour 3 jours : il se garde au frigo dans une boîte." },
+    { id: "co-barres", name: "Boules protéinées avoine-cacahuète", ing: [["avoine", 40, "40 g"], ["whey", 30, "1 dose"], ["pb", 15, "1 c. à s."], ["miel", 10, "1 c. à c."], ["lait", 30, "2 c. à s."]],
+      steps: ["Mélange tout dans un bol jusqu'à obtenir une pâte qui se tient (ajoute un peu de lait si c'est trop sec).", "Forme 4 boules et mets-les 20 min au frigo."],
+      batch: "Fais-en une semaine d'un coup : elles se gardent 5 jours au frigo." }
+  );
+
+  /* Protéine principale de chaque recette (filtres de l'onglet Repas) */
+  var PROTEINS = [
+    { k: "volaille", label: "Volaille" }, { k: "boeuf", label: "Bœuf" }, { k: "porc", label: "Porc & jambon" },
+    { k: "poisson", label: "Poisson" }, { k: "oeufs", label: "Œufs" }, { k: "laitier", label: "Laitiers" },
+    { k: "whey", label: "Whey" }, { k: "vege", label: "Végé" }
+  ];
+  var PROT_OF = {
+    "pd-porridge": "oeufs", "pd-overnight": "laitier", "pd-tartines": "oeufs", "pd-pancakes": "oeufs", "pd-omelette": "oeufs", "pd-bowlskyr": "laitier",
+    "pd-porrcacao": "whey", "pd-shaker": "whey", "pd-wrap": "oeufs", "pd-painperdu": "oeufs", "pd-crepes": "oeufs", "pd-oeufsjambon": "oeufs",
+    "pd-fbgranola": "laitier", "pd-avocat": "oeufs", "pd-rizlait": "whey",
+    "mi-poulriz": "volaille", "mi-patesthon": "poisson", "mi-poulpdt": "volaille", "mi-tikka": "volaille", "mi-wrappoul": "volaille", "mi-bowlcoree": "boeuf",
+    "mi-salpates": "volaille", "mi-porcsoja": "porc", "mi-curry": "volaille", "mi-semoule": "volaille", "mi-cabillaud": "poisson", "mi-crevettes": "poisson",
+    "mi-boeufpoiv": "boeuf", "mi-tofu": "vege", "mi-fajitas": "volaille",
+    "so-bolo": "boeuf", "so-chili": "boeuf", "so-wok": "volaille", "so-parmentier": "boeuf", "so-saumon": "poisson", "so-burger": "boeuf",
+    "so-patespoul": "volaille", "so-dahl": "volaille", "so-tacos": "boeuf", "so-omelette": "oeufs", "so-sardines": "poisson", "so-porcmout": "porc",
+    "so-sincarne": "vege", "so-cuisses": "volaille", "so-shakshuka": "oeufs",
+    "co-skyramandes": "laitier", "co-fbnoix": "laitier", "co-skyrpb": "laitier", "co-fbamandes": "laitier", "co-shaker": "whey", "co-galettes": "laitier",
+    "co-tartjambon": "porc", "co-skyrcacao": "laitier", "co-oeufs": "oeufs", "co-mugcake": "whey", "co-thongal": "poisson", "co-smoothie": "laitier",
+    "co-wrapjambon": "porc", "co-houmous": "vege", "co-barres": "whey"
+  };
+  Object.keys(RECIPES).forEach(function (k) { RECIPES[k].forEach(function (r) { r.p = PROT_OF[r.id] || "vege"; }); });
+
+  Object.keys(RNAME_EXTRA).forEach(function (k) { RNAME[k] = RNAME_EXTRA[k]; });
+
   /* ---------- Programme 24 semaines (Upper/Lower, Basic Fit) ---------- */
   var P12 = {
     "Upper A": [["Tirage vertical (poulie haute, barre large)", "3 × 8-10", "3-1-1", "2m30"], ["Développé couché machine convergente (ou haltères)", "3 × 8-10", "3-1-1", "2m30"], ["Rowing assis poulie basse", "3 × 10-12", "3-0-1", "2 min"], ["Élévations latérales (poulie basse ou haltères)", "3 × 12-15", "2-1-1", "1m30"], ["Extension triceps poulie", "2 × 12-15", "2-1-1", "1m30"], ["Curl biceps", "2 × 12", "2-1-1", "1m30"]],
@@ -311,5 +407,5 @@ window.CLB_DATA = (function () {
   ];
 
   return { STORES: STORES, FOOD: FOOD, PRICES: PRICES, PRICES_DATE: PRICES_DATE, SPICES: SPICES, RNAME: RNAME,
-    MOMENTS: MOMENTS, RECIPES: RECIPES, BLOCKS: BLOCKS, GENERAL: GENERAL };
+    MOMENTS: MOMENTS, RECIPES: RECIPES, PROTEINS: PROTEINS, BLOCKS: BLOCKS, GENERAL: GENERAL };
 })();

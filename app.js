@@ -2,7 +2,7 @@
 (function () {
   "use strict";
   var D = window.CLB_DATA;
-  var APP_VERSION = "2.0.0";
+  var APP_VERSION = "2.1.0";
   var STORE_KEY = "clb.state.v1";
 
   /* ================= utilitaires ================= */
@@ -309,6 +309,12 @@
   var current = "accueil";
   var weekOff = 0;
   var repasSeg = MK[slotNow()];
+  var protFilter = "all";
+  function protChips(list, cur) {
+    var cats = D.PROTEINS.filter(function (c) { return list.some(function (r) { return r.p === c.k; }); });
+    return '<div class="chips filt" role="group" aria-label="Filtrer par protéine"><button type="button" class="chipbtn" data-prot="all" aria-pressed="' + (cur === "all") + '">Tout · ' + list.length + '</button>' +
+      cats.map(function (c) { var n = list.filter(function (r) { return r.p === c.k; }).length; return '<button type="button" class="chipbtn" data-prot="' + c.k + '" aria-pressed="' + (cur === c.k) + '">' + esc(c.label) + ' · ' + n + '</button>'; }).join("") + '</div>';
+  }
   function planWeek() { return addDays(mondayOf(today()), 7 * weekOff); }
   var suiviSeg = "pesees";
   function show(tab) {
@@ -646,7 +652,10 @@
       '<p class="small muted">Choisis combien de fois tu manges chaque recette' + (weekOff ? ' la semaine prochaine' : ' cette semaine') + ' : la liste de courses se calcule dessus. ' +
       (cnt === 7 ? '<span class="chip good">7/7 prévus</span>' : '<span class="chip warn">' + cnt + '/7 prévus</span>') +
       (planIsCopy(ws) ? ' <span class="tiny">Planning repris de la semaine précédente.</span>' : '') + '</p>';
-    html += recipesFor(repasSeg).map(function (r) {
+    var allR = recipesFor(repasSeg);
+    if (protFilter !== "all" && !allR.some(function (r) { return r.p === protFilter; })) protFilter = "all";
+    html += protChips(allR, protFilter);
+    html += allR.filter(function (r) { return protFilter === "all" || r.p === protFilter; }).map(function (r) {
       var n = (p[repasSeg] && p[repasSeg][r.id]) || 0, kf = factor(), mc = macros(r.ing, kf);
       return '<article class="meal' + (n ? ' planned' : '') + '"><div class="meal-top"><div class="grow"><h3>' + esc(r.name) + '</h3><p class="small muted num">' + Math.round(mc[0]) + ' kcal · ' + Math.round(mc[1]) + ' g P · ' + Math.round(mc[2]) + ' g G · ' + Math.round(mc[3]) + ' g L</p></div>' +
         '<div class="stepper" role="group" aria-label="Portions de ' + esc(r.name) + '"><button data-step="-1" data-id="' + r.id + '" aria-label="Une portion de moins"' + (n ? '' : ' disabled') + '>−</button><span class="num">' + n + '</span><button data-step="1" data-id="' + r.id + '" aria-label="Une portion de plus">+</button></div></div>' +
@@ -658,7 +667,8 @@
   $("view-repas").addEventListener("click", function (e) {
     var t = today();
     var wk = e.target.closest("[data-week]"); if (wk) { weekOff = +wk.dataset.week; renderRepas(); return; }
-    var sg = e.target.closest("[data-seg]"); if (sg) { repasSeg = sg.dataset.seg; renderRepas(); return; }
+    var sg = e.target.closest("[data-seg]"); if (sg) { repasSeg = sg.dataset.seg; protFilter = "all"; renderRepas(); return; }
+    var pf = e.target.closest("[data-prot]"); if (pf) { protFilter = pf.dataset.prot; renderRepas(); return; }
     var st = e.target.closest("[data-step]");
     if (st) {
       var ws = planWeek(), p = planEnsure(ws), o = p[repasSeg], id = st.dataset.id, n = (o[id] || 0) + (+st.dataset.step);
@@ -674,15 +684,23 @@
     var all = recipesFor(m), planned = all.filter(function (r) { return p[r.id]; }), others = all.filter(function (r) { return !p[r.id]; });
     function row(r, extra) {
       var mc = macros(r.ing, factor(d));
-      return '<button class="opt' + (r.id === cur ? ' sel' : '') + '" data-pick="' + r.id + '"><span class="grow"><span class="nm">' + esc(r.name) + '</span>' + (extra ? '<span class="tiny muted">' + extra + '</span>' : '') + '</span><span class="k num">' + Math.round(mc[0]) + ' kcal</span></button>';
+      return '<button class="opt' + (r.id === cur ? ' sel' : '') + '" data-pick="' + r.id + '" data-p="' + r.p + '"><span class="grow"><span class="nm">' + esc(r.name) + '</span>' + (extra ? '<span class="tiny muted">' + extra + '</span>' : '') + '</span><span class="k num">' + Math.round(mc[0]) + ' kcal</span></button>';
     }
-    sheet('<h2>' + esc(mo.label) + '</h2><p class="small muted">Qu\'est-ce qui te fait envie ?</p>' +
+    sheet('<h2>' + esc(mo.label) + '</h2><p class="small muted">Qu\'est-ce qui te fait envie ?</p>' + protChips(all, "all") +
       (planned.length ? '<span class="eyebrow">Prévu cette semaine</span><div class="opts">' + planned.map(function (r) { var left = p[r.id] - eatenInWeek(ws, r.id, d); return row(r, left > 0 ? 'Encore ' + left + ' prévu' + (left > 1 ? 's' : '') : 'Quota de la semaine atteint'); }).join("") + '</div>' : '') +
       '<span class="eyebrow">Autres recettes</span><div class="opts">' + others.map(function (r) { return row(r, 'Hors planning'); }).join("") +
       '<button class="opt' + (cur === "libre" ? ' sel' : '') + '" data-pick="libre"><span class="grow"><span class="nm">Repas libre (hors plan)</span><span class="tiny muted">Resto, repas de famille…</span></span></button></div>' +
       '<button class="btn block" data-sheet="close">Annuler</button>', function (root) {
       root.querySelectorAll("[data-pick]").forEach(function (b) {
         b.addEventListener("click", function () { setPick(m, d, b.dataset.pick); save(); closeSheet(); after(); toast("Repas choisi"); });
+      });
+      root.querySelectorAll("[data-prot]").forEach(function (c) {
+        c.addEventListener("click", function () {
+          var k = c.dataset.prot;
+          root.querySelectorAll("[data-prot]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === c)); });
+          root.querySelectorAll("[data-pick]").forEach(function (b) { b.hidden = !(k === "all" || b.dataset.p === k || b.dataset.pick === "libre"); });
+          root.querySelectorAll(".opts").forEach(function (o) { var any = Array.prototype.some.call(o.children, function (b) { return !b.hidden; }); o.hidden = !any; var lab = o.previousElementSibling; if (lab && lab.classList.contains("eyebrow")) lab.hidden = !any; });
+        });
       });
     });
   }

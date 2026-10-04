@@ -256,3 +256,7 @@ details.fold[open] summary::after{transform:rotate(-135deg)}
 .calc .li b{font-family:var(--display);font-size:22px;white-space:nowrap}
 .calc .li.hl{background:var(--red-soft)}
 .calc .li.hl b{color:var(--red-hi)}
+.chips.filt{flex-wrap:nowrap;overflow-x:auto;margin-inline:-16px;padding-inline:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.chips.filt::-webkit-scrollbar{display:none}
+.chips.filt .chipbtn{white-space:nowrap;flex:none;padding:7px 11px;font-size:13px}
+.sheet .chips.filt{margin-inline:0;padding-inline:0}
