@@ -2,7 +2,7 @@
 (function () {
   "use strict";
   var D = window.CLB_DATA;
-  var APP_VERSION = "2.1.0";
+  var APP_VERSION = "2.2.0";
   var STORE_KEY = "clb.state.v1";
 
   /* ================= utilitaires ================= */
@@ -23,15 +23,16 @@
   function sign(n, d) { return (n > 0 ? "+" : n < 0 ? "−" : "") + fmt(Math.abs(n), d); }
 
   var toastTimer = null;
-  function toast(msg) {
+  function toast(msg, actLabel, act) {
     var t = $("toast"); t.textContent = msg; t.hidden = false;
-    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 2400);
+    if (actLabel) { var b = document.createElement("button"); b.className = "toast-act"; b.textContent = actLabel; b.onclick = function () { t.hidden = true; act(); }; t.appendChild(b); }
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, actLabel ? 4500 : 2400);
   }
 
   /* ================= état ================= */
   function defaults() {
     return {
-      settings: { startDate: "2026-09-21", mealHours: [10, 14, 18], shopMode: "mix", stores: ["lidl"], showProgram: false, lastExport: null },
+      settings: { startDate: "2026-09-21", mealHours: [10, 14, 18], shopMode: "mix", stores: ["lidl"], showProgram: false, drive: null, lastExport: null },
       profile: null, weights: {}, waist: {}, kcal: {}, plan: {}, day: {}, shop: {}, prices: {}, rides: {}
     };
   }
@@ -328,7 +329,7 @@
     try { sessionStorage.setItem("clb.tab", tab); } catch (e) {}
   }
   function render() {
-    ({ accueil: renderAccueil, suivi: renderSuivi, repas: renderRepas, courses: renderCourses })[current]();
+    ({ accueil: renderAccueil, suivi: renderSuivi, repas: renderRepas, recettes: renderRecettes, courses: renderCourses })[current]();
   }
   document.querySelectorAll(".tab").forEach(function (b) { b.addEventListener("click", function () { show(b.dataset.tab); }); });
   window.addEventListener("scroll", function () { $("topbar").classList.toggle("scrolled", window.scrollY > 4); }, { passive: true });
@@ -396,7 +397,7 @@
     if (next >= 0) {
       var mk = MK[next], id = pickFor(mk, t), mc = recipeMacros(id, factor(t));
       html += '<div><span class="eyebrow">' + esc(D.MOMENTS[next].label) + '</span><h3>' + esc(recipeName(id)) + '</h3>' + (mc ? '<p class="small muted num">' + Math.round(mc[0]) + ' kcal · ' + Math.round(mc[1]) + ' g protéines</p>' : '') + '</div>' +
-        '<div class="row"><button class="btn primary grow" data-act="eat" data-m="' + mk + '">Mangé</button><button class="btn" data-act="choose" data-m="' + mk + '">Changer</button></div>';
+        '<div class="row"><button class="btn primary grow" data-act="eat" data-m="' + mk + '">Mangé</button>' + (RBY[id] ? '<button class="btn" data-recipe="' + id + '">Recette</button>' : '') + '<button class="btn" data-act="choose" data-m="' + mk + '">Changer</button></div>';
     } else if (done.every(Boolean)) {
       html += '<p><b>Journée complète.</b> <span class="muted">Les 4 repas sont cochés.</span></p>';
     } else {
@@ -458,6 +459,7 @@
 
   $("view-accueil").addEventListener("click", function (e) {
     var go = e.target.closest("[data-go]"); if (go) { show(go.dataset.go); return; }
+    var rc = e.target.closest("[data-recipe]"); if (rc) { recipeSheet(rc.dataset.recipe, 1); return; }
     var a = e.target.closest("[data-act]"); if (!a) return;
     var act = a.dataset.act;
     if (act === "save-today") {
@@ -637,7 +639,7 @@
       if (mc) { total += mc[0]; if (d) eaten += mc[0]; }
       return '<div class="tl' + (d ? ' done' : '') + '"><button class="check" role="checkbox" aria-checked="' + d + '" data-eat="' + mo.k + '" aria-label="' + esc(mo.label) + ' mangé">' + CHECK_SVG + '</button>' +
         '<button class="txt pick" data-choose="' + mo.k + '" aria-label="Changer le ' + esc(mo.short) + '"><span class="eyebrow">' + esc(mo.short) + '</span><span class="nm">' + esc(recipeName(id)) + '</span></button>' +
-        '<span class="k">' + (mc ? Math.round(mc[0]) + ' kcal' : '—') + '</span></div>';
+        '<span class="k">' + (mc ? Math.round(mc[0]) + ' kcal' : '—') + '</span>' + (RBY[id] ? '<button class="iconbtn sm" data-recipe="' + id + '" aria-label="Voir la recette">' + BOOK_SVG + '</button>' : '') + '</div>';
     }).join("");
     var html = '<section class="card"><div class="card-head"><h2>Aujourd\'hui</h2><span class="tiny muted">' + esc(longDate(t)) + '</span></div>' +
       '<div class="bar" aria-hidden="true"><i style="width:' + (total ? eaten / total * 100 : 0) + '%"></i></div><p class="tiny muted num">' + Math.round(eaten) + ' / ' + Math.round(total) + ' kcal' + (rideHours(t) ? ' (sortie de ' + rideHours(t) + ' h incluse)' : '') + ' · touche un repas pour en choisir un autre · remise à zéro chaque jour</p>' +
@@ -666,6 +668,7 @@
   }
   $("view-repas").addEventListener("click", function (e) {
     var t = today();
+    var rc = e.target.closest("[data-recipe]"); if (rc) { recipeSheet(rc.dataset.recipe, 1); return; }
     var wk = e.target.closest("[data-week]"); if (wk) { weekOff = +wk.dataset.week; renderRepas(); return; }
     var sg = e.target.closest("[data-seg]"); if (sg) { repasSeg = sg.dataset.seg; protFilter = "all"; renderRepas(); return; }
     var pf = e.target.closest("[data-prot]"); if (pf) { protFilter = pf.dataset.prot; renderRepas(); return; }
@@ -705,7 +708,96 @@
     });
   }
 
+  /* ================= RECETTES ================= */
+  var BOOK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>';
+  var rcQuery = "", rcMoment = "all";
+  function rrow(r, extra) {
+    var mc = macros(r.ing, factor());
+    return '<button class="rrow" data-recipe="' + r.id + '"' + (extra && extra.n ? ' data-n="' + extra.n + '"' : '') + '><span class="grow"><span class="nm">' + esc(r.name) + '</span><span class="tiny muted">' + (extra && extra.sub ? extra.sub : Math.round(mc[0]) + ' kcal · ' + Math.round(mc[1]) + ' g P') + '</span></span>' + (extra && extra.n ? '<span class="xn">×' + extra.n + '</span>' : '') + '<span class="chev" aria-hidden="true"></span></button>';
+  }
+  function allRecipes() { var out = []; MK.forEach(function (k) { out = out.concat(D.RECIPES[k]); }); return out; }
+  function norm(x) { return x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
+  function rcListHTML() {
+    var q = norm(rcQuery.trim()), list = allRecipes().filter(function (r) {
+      var mOk = rcMoment === "all" || (rcMoment === "gam" ? (r.m === "midi" || r.m === "soir") : r.m === rcMoment);
+      var qOk = !q || norm(r.name).indexOf(q) >= 0 || r.ing.some(function (x) { return norm(ingName(x[0])).indexOf(q) >= 0; });
+      return mOk && qOk;
+    });
+    if (!list.length) return '<div class="empty">Aucune recette ne correspond.</div>';
+    return '<div class="rlist">' + list.map(function (r) { return rrow(r); }).join("") + '</div>';
+  }
+  function renderRecettes() {
+    var el = $("view-recettes"), t = today(), ws = planWeek(), p = planFor(ws);
+    var html = '<section class="card"><div class="card-head"><h2>Aujourd\'hui</h2><span class="tiny muted">' + esc(longDate(t)) + '</span></div><div class="rlist">' +
+      D.MOMENTS.map(function (mo) { var id = pickFor(mo.k, t); return RBY[id] ? rrow(RBY[id], { sub: esc(mo.short) + (isDone(mo.k, t) ? ' · mangé' : '') }) : ''; }).join("") + '</div></section>';
+    html += '<div class="section-head"><h2>Ma semaine</h2><span class="tiny muted">' + short(ws) + ' → ' + short(addDays(ws, 6)) + '</span></div>' + weekSegHTML();
+    var any = false;
+    D.MOMENTS.forEach(function (mo) {
+      var o = p[mo.k] || {}, ids = Object.keys(o).filter(function (id) { return RBY[id] && o[id]; }).sort(function (a, b) { return o[b] - o[a]; });
+      if (!ids.length) return; any = true;
+      html += '<section class="card"><span class="eyebrow">' + esc(mo.label) + '</span><div class="rlist">' + ids.map(function (id) { return rrow(RBY[id], { n: o[id] }); }).join("") + '</div></section>';
+    });
+    if (!any) html += '<div class="empty">Rien de prévu pour cette semaine. Choisis tes recettes et leurs portions dans l\'onglet Repas.</div>';
+    html += '<div class="section-head"><h2>Toutes les recettes</h2><span class="tiny muted">' + allRecipes().length + '</span></div>' +
+      '<input id="rc-q" type="search" placeholder="Chercher : poulet, pâtes, skyr…" value="' + esc(rcQuery) + '" aria-label="Chercher une recette">' +
+      '<div class="chips filt" role="group" aria-label="Moment">' + [["all", "Tout"], ["pd", "Petit-déj"], ["gam", "Gamelles"], ["coll", "Collations"]].map(function (x) { return '<button type="button" class="chipbtn" data-rcm="' + x[0] + '" aria-pressed="' + (rcMoment === x[0]) + '">' + x[1] + '</button>'; }).join("") + '</div>' +
+      '<div id="rc-list">' + rcListHTML() + '</div>';
+    el.innerHTML = html;
+  }
+  $("view-recettes").addEventListener("click", function (e) {
+    var rc = e.target.closest("[data-recipe]"); if (rc) { recipeSheet(rc.dataset.recipe, 1, +rc.dataset.n || 0); return; }
+    var wk = e.target.closest("[data-week]"); if (wk) { weekOff = +wk.dataset.week; renderRecettes(); return; }
+    var m = e.target.closest("[data-rcm]"); if (m) { rcMoment = m.dataset.rcm; document.querySelectorAll("#view-recettes [data-rcm]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === m)); }); $("rc-list").innerHTML = rcListHTML(); }
+  });
+  $("view-recettes").addEventListener("input", function (e) { if (e.target.id === "rc-q") { rcQuery = e.target.value; $("rc-list").innerHTML = rcListHTML(); } });
+
+  function recipeSheet(id, portions, planned) {
+    var r = RBY[id]; if (!r) return;
+    var mo = D.MOMENTS[MK.indexOf(r.m)], done = {};
+    function body() {
+      var k = factor() * portions, mc = macros(r.ing, factor());
+      var opts = [1, 2, 3, 4]; if (planned > 4) opts.push(planned);
+      return '<span class="eyebrow">' + esc(r.m === "midi" || r.m === "soir" ? "Gamelle midi / soir" : mo.label) + '</span><h2 class="rtitle">' + esc(r.name) + '</h2>' +
+        '<p class="small muted num">Par portion : ' + Math.round(mc[0]) + ' kcal · ' + Math.round(mc[1]) + ' g P · ' + Math.round(mc[2]) + ' g G · ' + Math.round(mc[3]) + ' g L</p>' +
+        '<div class="field"><label>Je cuisine pour</label><div class="seg portions" role="group">' + opts.map(function (n) { return '<button data-por="' + n + '" aria-pressed="' + (n === portions) + '">' + n + ' portion' + (n > 1 ? 's' : '') + (n === planned ? ' (sem.)' : '') + '</button>'; }).join("") + '</div></div>' +
+        '<h3>Ingrédients' + (portions > 1 ? ' · ×' + portions : '') + '</h3><ul class="ing big">' + r.ing.map(function (x) { return '<li><span class="q">' + esc(ingLabel(x, k)) + '</span><span>' + esc(ingName(x[0])) + '</span></li>'; }).join("") + '</ul>' +
+        '<h3>Étapes</h3><p class="tiny muted">Touche une étape quand elle est faite.</p><ol class="steps big">' + r.steps.map(function (st, i) { return '<li data-stepi="' + i + '" class="' + (done[i] ? 'done' : '') + '">' + esc(st) + '</li>'; }).join("") + '</ol>' +
+        (r.batch ? '<p class="batch"><b>Batch :</b> ' + esc(r.batch) + '</p>' : '') +
+        (portions > 1 ? '<p class="tiny muted">Les quantités tiennent compte de ton objectif (' + targetKcal() + ' kcal/j). Pense à répartir en ' + portions + ' boîtes.</p>' : '') +
+        '<button class="btn block" data-sheet="close">Fermer</button>';
+    }
+    sheet('<div id="rs-body">' + body() + '</div>', function (root) {
+      root.querySelector(".sheet").classList.add("tall");
+      root.querySelector("#rs-body").addEventListener("click", function (e) {
+        var b = e.target.closest("[data-por]"); if (b) { portions = +b.dataset.por; root.querySelector("#rs-body").innerHTML = body(); return; }
+        var li = e.target.closest("[data-stepi]"); if (li) { var i = +li.dataset.stepi; done[i] = !done[i]; li.classList.toggle("done", !!done[i]); }
+      });
+    });
+  }
+
   /* ================= COURSES ================= */
+  var DRIVES = [
+    { id: "intermarche", name: "Intermarché", tpl: "https://www.intermarche.com/recherche/{q}", home: "https://www.intermarche.com/" },
+    { id: "leclerc", name: "E.Leclerc Drive", tpl: "https://www.e.leclerc/recherche?q={q}", home: "https://www.e.leclerc/" },
+    { id: "carrefour", name: "Carrefour", tpl: "https://www.carrefour.fr/s?q={q}", home: "https://www.carrefour.fr/" },
+    { id: "auchan", name: "Auchan", tpl: "https://www.auchan.fr/recherche?text={q}", home: "https://www.auchan.fr/" },
+    { id: "superu", name: "Courses U (Super U)", tpl: "https://www.coursesu.com/recherche?q={q}", home: "https://www.coursesu.com/" },
+    { id: "alcampo", name: "Alcampo", tpl: "https://www.compraonline.alcampo.es/search?q={q}", home: "https://www.compraonline.alcampo.es/", es: true },
+    { id: "mercadona", name: "Mercadona", tpl: "https://tienda.mercadona.es/search-results?query={q}", home: "https://tienda.mercadona.es/", es: true }
+  ];
+  var DRIVE_Q = { hache: "steak haché 5%", pdt: "pommes de terre", thon: "thon au naturel", hrouges: "haricots rouges", lentilles: "lentilles cuites", poischiches: "pois chiches",
+    mais: "maïs doux", cuisse: "haut de cuisse poulet", boeuf: "émincé de boeuf", sardines: "sardines", oeuf: "oeufs", fblanc: "fromage blanc 0%", pb: "beurre de cacahuète",
+    tortilla: "wraps tortillas", galettes: "galettes de riz", choco: "chocolat noir 70%", cacao: "cacao en poudre non sucré", coco: "lait de coco", frouges: "fruits rouges surgelés",
+    poelee: "poêlée de légumes surgelée", poivrons: "poivrons surgelés", cabillaud: "dos de cabillaud surgelé", crevettes: "crevettes décortiquées", pain: "pain de mie complet", lait: "lait demi-écrémé" };
+  function driveById(id) { for (var i = 0; i < DRIVES.length; i++) if (DRIVES[i].id === id) return DRIVES[i]; return null; }
+  function myDrive() { var d = S.settings.drive; if (!d || !d.id) return null; var b = driveById(d.id); if (!b) return null; return { id: b.id, name: b.name, es: b.es, tpl: d.tpl || b.tpl, home: d.home || b.home }; }
+  function driveURL(k) {
+    var d = myDrive(); if (!d) return null;
+    var term = d.es ? D.FOOD[k].es.split(/[\/(]/)[0].trim() : (DRIVE_Q[k] || D.FOOD[k].fr.replace(/\s*\(.*?\)/g, ""));
+    return d.tpl.replace("{q}", encodeURIComponent(term));
+  }
+  var CART_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a1.5 1.5 0 0 0 1.5 1.2h8.8a1.5 1.5 0 0 0 1.5-1.1L21 8H6"/></svg>';
+
   function renderCourses() {
     var el = $("view-courses"), ws = planWeek(), items = shopItems(ws), ck = shopChecked(ws), tot = shopTotals(items), mode = shopMode(), stores = S.settings.stores, es = showsES();
     var done = items.filter(function (it) { return ck[it.k]; }).length;
@@ -721,7 +813,8 @@
       '<div class="cost" style="grid-template-columns:repeat(' + cells.length + ',minmax(0,1fr))">' + cells.join("") + '</div>' +
       '<p class="tiny muted">Coût des quantités de ton planning, ajustées à ton objectif (hors épices et whey). ' + esc(srcNote) + '. Touche un prix pour le corriger.' + (bestKey === "mix" ? ' Le mix fait économiser ' + fmt(tot[cheapest] - tot.mix, 0) + ' € mais demande deux magasins.' : '') + ' Magasins modifiables dans les réglages.</p></section>';
     if (stores.length > 1) html += '<div class="seg" role="group" aria-label="Magasin"><button data-mode="mix" aria-pressed="' + (mode === "mix") + '">Meilleur prix</button>' + stores.map(function (sid) { return '<button data-mode="' + sid + '" aria-pressed="' + (mode === sid) + '">Tout ' + esc(storeName(sid)) + '</button>'; }).join("") + '</div>';
-    html += '<section class="card"><div class="row"><div class="bar grow" aria-hidden="true"><i style="width:' + (items.length ? done / items.length * 100 : 0) + '%"></i></div><span class="small muted num">' + done + ' / ' + items.length + '</span><button class="link" data-act="reset">Tout décocher</button></div>';
+    html += '<section class="card"><div class="row"><div class="bar grow" aria-hidden="true"><i style="width:' + (items.length ? done / items.length * 100 : 0) + '%"></i></div><span class="small muted num">' + done + ' / ' + items.length + '</span><button class="link" data-act="reset">Tout décocher</button></div>' +
+      '<div class="toolbar"><button class="btn" data-act="storemode">Mode magasin</button><button class="btn" data-act="share">Partager</button><button class="btn' + (myDrive() ? '' : ' primary') + '" data-act="drive">' + (myDrive() ? 'Drive · ' + esc(myDrive().name) : 'Mon drive') + '</button></div>';
     if (!items.length) html += '<div class="empty">Aucune recette prévue pour cette semaine. Planifie tes repas dans l\'onglet Repas.</div>';
     var groups;
     if (mode === "mix") groups = stores.map(function (sid) { return { t: "À acheter chez " + storeName(sid), items: items.filter(function (it) { return it.best === sid; }) }; });
@@ -734,7 +827,7 @@
         var other = stores.filter(function (x) { return x !== st; })[0], diff = (other && it.c[other] != null && c != null) ? it.c[other] - c : null;
         return '<div class="item' + (ck[it.k] ? ' done' : '') + '"><button class="check" role="checkbox" aria-checked="' + !!ck[it.k] + '" data-ck="' + it.k + '" aria-label="' + esc(it.f.fr) + ' acheté">' + CHECK_SVG + '</button>' +
           '<div class="txt" data-ck="' + it.k + '"><span class="nm">' + esc(it.f.fr) + '</span>' + (es ? '<span class="es">' + esc(it.f.es) + '</span>' : '') + (mode === "mix" && diff != null && diff > 0.2 ? '<span class="tiny muted">' + fmt(diff, 2) + ' € de moins que chez ' + esc(storeName(other)) + '</span>' : '') + '</div>' +
-          '<div class="right"><span class="qty">' + esc(it.q) + '</span><button class="pricebtn" data-price="' + it.k + '" aria-label="Modifier le prix de ' + esc(it.f.fr) + '">' + (edited ? '<span class="edited"></span>' : '') + (c == null ? '—' : fmt(c, 2) + ' €') + '<span class="muted">' + (pr.src === "estimé" ? '~' : '') + '</span></button></div></div>';
+          '<div class="right"><span class="qty">' + esc(it.q) + '</span>' + (driveURL(it.k) ? '<a class="drivebtn" href="' + esc(driveURL(it.k)) + '" target="_blank" rel="noopener" data-drive="' + it.k + '" aria-label="Chercher ' + esc(it.f.fr) + ' sur le drive">' + CART_SVG + '<span>Drive</span></a>' : '') + '<button class="pricebtn" data-price="' + it.k + '" aria-label="Modifier le prix de ' + esc(it.f.fr) + '">' + (edited ? '<span class="edited"></span>' : '') + (c == null ? '—' : fmt(c, 2) + ' €') + '<span class="muted">' + (pr.src === "estimé" ? '~' : '') + '</span></button></div></div>';
       }).join("") + '</div>';
     });
     html += '<div class="group"><h3>Épices · à vérifier</h3>' + D.SPICES.map(function (sp) { return '<div class="item"><div class="txt"><span class="nm">' + esc(sp[0]) + '</span>' + (es ? '<span class="es">' + esc(sp[1]) + '</span>' : '') + '</div></div>'; }).join("") + '</div></section>';
@@ -746,13 +839,96 @@
     var wk = e.target.closest("[data-week]"); if (wk) { weekOff = +wk.dataset.week; renderCourses(); return; }
     var md = e.target.closest("[data-mode]"); if (md) { S.settings.shopMode = md.dataset.mode; save(); renderCourses(); return; }
     var pb = e.target.closest("[data-price]"); if (pb) { priceSheet(pb.dataset.price); return; }
+    var dv = e.target.closest("[data-drive]");
+    if (dv) {
+      var key = dv.dataset.drive, ws = planWeek(), ckd = shopChecked(ws);
+      if (!ckd[key]) setTimeout(function () {
+        ckd[key] = true; save(); renderCourses();
+        toast(D.FOOD[key].fr + " coché", "Annuler", function () { delete shopChecked(ws)[key]; save(); if (current === "courses") renderCourses(); });
+      }, 400);
+      return;
+    }
     var c = e.target.closest("[data-ck]"); if (c) { var ck = shopChecked(planWeek()), k = c.dataset.ck; if (ck[k]) delete ck[k]; else ck[k] = true; save(); renderCourses(); return; }
     var a = e.target.closest("[data-act]");
+    if (a && a.dataset.act === "share") { shareList(); return; }
+    if (a && a.dataset.act === "storemode") { storeMode(); return; }
+    if (a && a.dataset.act === "drive") { driveSheet(); return; }
     if (a && a.dataset.act === "reset") {
       if (!a.dataset.armed) { a.dataset.armed = "1"; a.textContent = "Confirmer ?"; clearTimeout(resetTimer); resetTimer = setTimeout(function () { if (a.isConnected) { delete a.dataset.armed; a.textContent = "Tout décocher"; } }, 3000); return; }
       S.shop["w-" + planWeek()] = {}; save(); renderCourses(); toast("Liste remise à zéro");
     }
   });
+  function shareText() {
+    var ws = planWeek(), items = shopItems(ws), ck = shopChecked(ws), es = showsES();
+    var left = items.filter(function (it) { return !ck[it.k]; });
+    var out = ["Courses Forge · semaine du " + short(ws), ""];
+    RAYONS.forEach(function (r) {
+      var g = left.filter(function (it) { return it.f.rayon === r; }); if (!g.length) return;
+      out.push(r.toUpperCase());
+      g.forEach(function (it) { out.push("☐ " + it.f.fr + " : " + it.q + (es ? " (" + it.f.es + ")" : "")); });
+      out.push("");
+    });
+    if (!left.length) out.push("Tout est déjà pris.");
+    return out.join("\n").trim();
+  }
+  function shareList() {
+    var txt = shareText();
+    if (navigator.share) { navigator.share({ title: "Liste de courses", text: txt }).catch(function (e) { if (e && e.name !== "AbortError") copyText(txt); }); }
+    else copyText(txt);
+  }
+  function copyText(txt) {
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(function () { toast("Liste copiée"); }, function () { fallbackCopy(txt); });
+    else fallbackCopy(txt);
+  }
+  function fallbackCopy(txt) {
+    sheet('<h2>Ta liste</h2><p class="small muted">Sélectionne le texte et copie-le.</p><textarea class="copybox" readonly>' + esc(txt) + '</textarea><button class="btn block" data-sheet="close">Fermer</button>', function (root) { var ta = root.querySelector("textarea"); ta.focus(); ta.select(); });
+  }
+  var wakeLock = null;
+  function storeMode() {
+    var ws = planWeek();
+    function body() {
+      var items = shopItems(ws), ck = shopChecked(ws), mode = shopMode(), stores = S.settings.stores;
+      var left = items.filter(function (it) { return !ck[it.k]; }), got = items.filter(function (it) { return ck[it.k]; });
+      var groups = mode === "mix" ? stores.map(function (sid) { return { t: storeName(sid), items: left.filter(function (it) { return it.best === sid; }) }; })
+        : RAYONS.map(function (r) { return { t: r, items: left.filter(function (it) { return it.f.rayon === r; }) }; });
+      var h = '<div class="sm-head"><h2>En magasin</h2><span class="chip ' + (left.length ? 'grey' : 'good') + '">' + (left.length ? left.length + ' à prendre' : 'Tout est pris') + '</span></div>';
+      groups.forEach(function (g) {
+        if (!g.items.length) return;
+        if (mode === "mix") g.items.sort(function (x, y) { return RAYONS.indexOf(x.f.rayon) - RAYONS.indexOf(y.f.rayon); });
+        h += '<h3 class="sm-group">' + esc(g.t) + '</h3>' + g.items.map(function (it) { return '<button class="sm-item" data-smk="' + it.k + '"><span class="sm-box"></span><span class="grow"><span class="nm">' + esc(it.f.fr) + '</span>' + (showsES() ? '<span class="es">' + esc(it.f.es) + '</span>' : '') + '</span><span class="sm-q">' + esc(it.q) + '</span></button>'; }).join("");
+      });
+      if (got.length) h += '<h3 class="sm-group">Dans le panier · ' + got.length + '</h3>' + got.map(function (it) { return '<button class="sm-item got" data-smk="' + it.k + '"><span class="sm-box">' + CHECK_SVG + '</span><span class="grow"><span class="nm">' + esc(it.f.fr) + '</span></span><span class="sm-q">' + esc(it.q) + '</span></button>'; }).join("");
+      return h + '<button class="btn block" data-sheet="close">Terminer</button>';
+    }
+    sheet('<div id="sm-body">' + body() + '</div>', function (root) {
+      root.querySelector(".sheet").classList.add("tall", "storemode");
+      root.querySelector("#sm-body").addEventListener("click", function (e) {
+        var b = e.target.closest("[data-smk]"); if (!b) return;
+        var ck = shopChecked(ws), k = b.dataset.smk; if (ck[k]) delete ck[k]; else ck[k] = true; save();
+        root.querySelector("#sm-body").innerHTML = body();
+      });
+      if (navigator.wakeLock && navigator.wakeLock.request) navigator.wakeLock.request("screen").then(function (l) { wakeLock = l; }).catch(function () {});
+    }, function () { if (wakeLock) { wakeLock.release().catch(function () {}); wakeLock = null; } if (current === "courses") renderCourses(); });
+  }
+  function driveSheet() {
+    var d = S.settings.drive || {}, sel = d.id || "";
+    sheet('<h2>Mon drive</h2><p class="small muted">Choisis l\'enseigne de ton drive : chaque produit de la liste aura un bouton « Drive » qui ouvre la recherche sur son site, prête à ajouter au panier. Le produit se coche dans la liste.</p>' +
+      '<div class="opts" id="dv-opts">' + DRIVES.map(function (x) { return '<button type="button" class="opt' + (x.id === sel ? ' sel' : '') + '" data-dv="' + x.id + '"><span class="grow"><span class="nm">' + esc(x.name) + '</span></span></button>'; }).join("") +
+      '<button type="button" class="opt' + (!sel ? ' sel' : '') + '" data-dv=""><span class="grow"><span class="nm">Pas de drive</span></span></button></div>' +
+      '<div class="field"><label for="dv-home">Lien de ton magasin (facultatif)</label><input id="dv-home" type="url" placeholder="https://www.intermarche.com/magasins/…" value="' + esc(d.home || "") + '"><span class="tiny muted">Ouvre la page de ton drive, copie l\'adresse et colle-la ici : le bouton « Ouvrir mon drive » y mènera directement.</span></div>' +
+      '<details class="fold"' + (d.tpl ? ' open' : '') + '><summary>Avancé : lien de recherche personnalisé</summary><div class="field" style="margin-top:10px"><label for="dv-tpl">Adresse de recherche avec {q} à la place du produit</label><input id="dv-tpl" type="url" placeholder="https://…/recherche?q={q}" value="' + esc(d.tpl || "") + '"><span class="tiny muted">Si la recherche de ton enseigne ne marche pas : cherche « lait » sur son site, copie l\'adresse obtenue et remplace « lait » par {q}.</span></div></details>' +
+      '<p class="tiny muted">Astuce : sélectionne une fois ton magasin sur le site de l\'enseigne (ex. Intermarché Bidart) pour que les recherches affichent ses prix et son stock.</p>' +
+      '<button class="btn primary block" id="dv-save">Enregistrer</button>' + (myDrive() ? '<a class="btn block" id="dv-open" href="' + esc(myDrive().home) + '" target="_blank" rel="noopener">Ouvrir mon drive</a>' : '') + '<button class="btn block" data-sheet="close">Fermer</button>', function (root) {
+      root.querySelector("#dv-opts").addEventListener("click", function (e) { var b = e.target.closest("[data-dv]"); if (!b) return; sel = b.dataset.dv; root.querySelectorAll("[data-dv]").forEach(function (x) { x.classList.toggle("sel", x === b); }); });
+      root.querySelector("#dv-save").addEventListener("click", function () {
+        var home = root.querySelector("#dv-home").value.trim(), tpl = root.querySelector("#dv-tpl").value.trim();
+        if (tpl && tpl.indexOf("{q}") < 0) { toast("Le lien de recherche doit contenir {q}"); return; }
+        if (home && !/^https?:\/\//.test(home)) { toast("Le lien du magasin doit commencer par https://"); return; }
+        S.settings.drive = sel ? { id: sel, home: home || "", tpl: tpl || "" } : null;
+        save(); closeSheet(); renderCourses(); toast(sel ? "Drive enregistré" : "Drive retiré");
+      });
+    });
+  }
   function priceSheet(k) {
     var f = D.FOOD[k], base = D.PRICES[k], unit = base.unit === "pièce" ? "€ / œuf" : "€ / " + base.unit, stores = S.settings.stores;
     sheet('<h2>' + esc(f.fr) + '</h2>' + (showsES() ? '<p class="small muted">' + esc(f.es) + '</p>' : '') +
